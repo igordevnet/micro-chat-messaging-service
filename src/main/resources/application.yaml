@@ -1,0 +1,34 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: micro-chat-messaging-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/quiz
+    username: postgres
+    password: root
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/chat_messages_db
+
+    redis:
+      host: localhost
+      port: 6379
+
+
+api:
+  security:
+    token:
+      secret: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"

@@ -1,16 +1,18 @@
-package com.microservice.microchatmessagingservice.infrastructure.persistence.mongodb.entities;
+package com.microservice.microchatmessagingservice.domain;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
-@Document(collection = "messages")
-public class MessageEntity {
-
-    @Id
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class Message {
     private String id;
 
     private UUID chatId;
