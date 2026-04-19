@@ -38,6 +38,6 @@ public class ChatRepositoryGateway implements ChatGateway {
     public List<Chat> getChatList(Long userId) {
         List<ChatEntity> chatEntities = chatRepository.findAllByParticipants(userId);
 
-        return chatMapper.entityToList(chatEntities);
+        return chatMapper.entityToDomainList(chatEntities);
     }
 }

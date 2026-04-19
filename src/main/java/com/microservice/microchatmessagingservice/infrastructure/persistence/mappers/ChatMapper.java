@@ -1,5 +1,7 @@
 package com.microservice.microchatmessagingservice.infrastructure.persistence.mappers;
 
+import com.microservice.microchatmessagingservice.controller.dtos.reponse.ChatResponse;
+import com.microservice.microchatmessagingservice.controller.dtos.request.ChatRequest;
 import com.microservice.microchatmessagingservice.domain.Chat;
 import com.microservice.microchatmessagingservice.infrastructure.persistence.postgre.entities.ChatEntity;
 import org.mapstruct.Mapper;
@@ -12,5 +14,11 @@ public interface ChatMapper {
 
     ChatEntity domainToEntity(Chat chat);
 
-    List<Chat> entityToList(List<ChatEntity> chatEntities);
+    Chat requestToDomain(ChatRequest chatRequest);
+
+    ChatResponse domainToResponse(Chat chat);
+
+    List<ChatResponse> domainToResponseList(List<Chat> chats);
+
+    List<Chat> entityToDomainList(List<ChatEntity> chatEntities);
 }

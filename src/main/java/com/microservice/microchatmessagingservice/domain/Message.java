@@ -16,7 +16,10 @@ public class Message {
     private String id;
 
     private UUID chatId;
-    private UUID senderId;
+    private Long senderId;
     private String content;
+    private Boolean edited;
+    private Boolean read;
+
     private LocalDateTime timestamp;
 }

@@ -1,8 +1,10 @@
 package com.microservice.microchatmessagingservice.application.gateways;
 
 import com.microservice.microchatmessagingservice.domain.Message;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface MessageGateway {
@@ -13,5 +15,7 @@ public interface MessageGateway {
 
     Message updateMessage(Message newMessage);
 
-    List<Message> getMessageList(UUID chatId);
+    Page<Message> getMessagePage(UUID chatId, Pageable pageable);
+
+    Optional<Message> findMessageById(String messageId);
 }

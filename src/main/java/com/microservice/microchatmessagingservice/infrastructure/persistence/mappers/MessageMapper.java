@@ -1,8 +1,12 @@
 package com.microservice.microchatmessagingservice.infrastructure.persistence.mappers;
 
+import com.microservice.microchatmessagingservice.controller.dtos.reponse.MessageResponse;
+import com.microservice.microchatmessagingservice.controller.dtos.request.EditMessageRequest;
+import com.microservice.microchatmessagingservice.controller.dtos.request.SendMessageRequest;
 import com.microservice.microchatmessagingservice.domain.Message;
 import com.microservice.microchatmessagingservice.infrastructure.persistence.mongodb.entities.MessageEntity;
 import org.mapstruct.Mapper;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -12,5 +16,9 @@ public interface MessageMapper {
 
     MessageEntity domainToEntity(Message message);
 
-    List<Message> entityToList(List<MessageEntity> messageEntities);
+    Message sendRequestToDomain(SendMessageRequest sendMessageRequest);
+
+    Message editRequestToDomain(EditMessageRequest editMessageRequest);
+
+    MessageResponse domainToResponse(Message message);
 }
