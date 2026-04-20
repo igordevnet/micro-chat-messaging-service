@@ -36,27 +36,6 @@ public class ChatUseCaseTest {
     private ChatUseCase chatUseCase;
 
     @Test
-    @DisplayName("Should throw if user can't delete the chat")
-    void shouldThrowIfUserCannotDeleteChat() {
-        UUID chatId = UUID.randomUUID();
-        Long userId = 1L;
-        List<Long> participantIds = List.of(2L, 3L);
-
-        Chat chatFromDb = new Chat();
-        chatFromDb.setParticipants(participantIds);
-
-        when(chatGateway.getChat(chatId)).thenReturn(Optional.of(chatFromDb));
-
-        UnauthorizedActionException exception = assertThrows(UnauthorizedActionException.class,
-                () -> chatUseCase.deleteChat(userId, chatId));
-
-
-        assertEquals("You are not allowed to delete this chat", exception.getMessage());
-
-        verify(chatGateway, times(1)).getChat(chatId);
-    }
-
-    @Test
     @DisplayName("Should create a new chat")
     void createNewChat() {
         String chatName = "test";

@@ -1,6 +1,7 @@
 package com.microservice.microchatmessagingservice.controller;
 
 import com.microservice.microchatmessagingservice.application.usecases.MessageUseCase;
+import com.microservice.microchatmessagingservice.controller.dtos.reponse.MessagePaginatedResponse;
 import com.microservice.microchatmessagingservice.controller.dtos.reponse.MessageResponse;
 import com.microservice.microchatmessagingservice.infrastructure.config.UserAuthenticated;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ public class MessageRestController {
     private final MessageUseCase messageUseCase;
 
     @GetMapping("/{chatId}")
-    public ResponseEntity<Page<MessageResponse>> getMessages(
+    public ResponseEntity<MessagePaginatedResponse> getMessages(
             @PathVariable UUID chatId,
             @RequestParam int page,
             @RequestParam int size

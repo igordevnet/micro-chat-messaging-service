@@ -43,13 +43,13 @@ public class ChatController {
     }
 
     @DeleteMapping("/{chatId}")
-    public ResponseEntity<Void> deleteChat(
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteChat(
             @PathVariable UUID chatId,
              @AuthenticationPrincipal UserAuthenticated currentUser
     ) {
         Long userId = currentUser.id();
 
         chatUseCase.deleteChat(userId, chatId);
-        return ResponseEntity.noContent().build();
     }
 }
