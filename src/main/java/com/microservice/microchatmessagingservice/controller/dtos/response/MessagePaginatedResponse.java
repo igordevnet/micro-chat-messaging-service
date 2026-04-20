@@ -1,4 +1,4 @@
-package com.microservice.microchatmessagingservice.controller.dtos.reponse;
+package com.microservice.microchatmessagingservice.controller.dtos.response;
 
 import java.util.List;
 

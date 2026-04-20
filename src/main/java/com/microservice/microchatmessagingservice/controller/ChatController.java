@@ -1,7 +1,7 @@
 package com.microservice.microchatmessagingservice.controller;
 
 import com.microservice.microchatmessagingservice.application.usecases.ChatUseCase;
-import com.microservice.microchatmessagingservice.controller.dtos.reponse.ChatResponse;
+import com.microservice.microchatmessagingservice.controller.dtos.response.ChatResponse;
 import com.microservice.microchatmessagingservice.controller.dtos.request.ChatRequest;
 import com.microservice.microchatmessagingservice.infrastructure.config.UserAuthenticated;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

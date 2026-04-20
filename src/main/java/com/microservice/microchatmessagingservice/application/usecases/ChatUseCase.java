@@ -1,7 +1,7 @@
 package com.microservice.microchatmessagingservice.application.usecases;
 
 import com.microservice.microchatmessagingservice.application.gateways.ChatGateway;
-import com.microservice.microchatmessagingservice.controller.dtos.reponse.ChatResponse;
+import com.microservice.microchatmessagingservice.controller.dtos.response.ChatResponse;
 import com.microservice.microchatmessagingservice.controller.dtos.request.ChatRequest;
 import com.microservice.microchatmessagingservice.domain.Chat;
 import com.microservice.microchatmessagingservice.infrastructure.persistence.mappers.ChatMapper;

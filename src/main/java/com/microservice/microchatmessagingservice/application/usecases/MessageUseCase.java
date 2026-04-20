@@ -2,12 +2,14 @@ package com.microservice.microchatmessagingservice.application.usecases;
 
 import com.microservice.microchatmessagingservice.application.exceptions.MessageNotFoundException;
 import com.microservice.microchatmessagingservice.application.exceptions.UnauthorizedActionException;
+import com.microservice.microchatmessagingservice.application.gateways.ChatGateway;
 import com.microservice.microchatmessagingservice.application.gateways.MessageGateway;
-import com.microservice.microchatmessagingservice.controller.dtos.reponse.MessagePaginatedResponse;
-import com.microservice.microchatmessagingservice.controller.dtos.reponse.MessageResponse;
+import com.microservice.microchatmessagingservice.controller.dtos.response.MessagePaginatedResponse;
+import com.microservice.microchatmessagingservice.controller.dtos.response.MessageResponse;
 import com.microservice.microchatmessagingservice.controller.dtos.request.EditMessageRequest;
 import com.microservice.microchatmessagingservice.controller.dtos.request.SendMessageRequest;
 import com.microservice.microchatmessagingservice.domain.Message;
+import com.microservice.microchatmessagingservice.domain.MessageType;
 import com.microservice.microchatmessagingservice.infrastructure.persistence.mappers.MessageMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -28,6 +31,7 @@ import java.util.stream.Collectors;
 public class MessageUseCase {
 
     private final MessageGateway messageGateway;
+    private final ChatGateway chatGateway;
     private final MessageMapper messageMapper;
 
     @CacheEvict(value = "messages", key = "#chatId.toString() + '*'", allEntries = false)
@@ -41,18 +45,30 @@ public class MessageUseCase {
         message.setSenderId(userId);
 
         var savedMessage = messageGateway.saveMessage(message);
+        savedMessage.setMessageType(MessageType.NEW_MESSAGE);
+
+        chatGateway.updateLastMessage(chatId, savedMessage.getContent(),  savedMessage.getCreatedAt());
 
         return messageMapper.domainToResponse(savedMessage);
     }
 
-    @CacheEvict(value = "messages", key = "#message.getChatId.toString() + '*'", allEntries = false)
-    public void deleteMessage(String messageId, Long userId) {
+    @CacheEvict(value = "messages", key = "#chatId + '*'", allEntries = false)
+    public void deleteMessage(UUID chatId, String messageId, Long userId) {
         Message message = messageGateway.findMessageById(messageId)
                 .orElseThrow(() -> new MessageNotFoundException("Message not found"));
 
         throwIfUserCannotDeleteTheMessage(userId, message.getSenderId());
 
         messageGateway.deleteMessage(messageId);
+
+        Optional<Message> newLastMessage = messageGateway.findLastMessageByChatId(chatId);
+
+        if (newLastMessage.isPresent()) {
+            Message previousMsg = newLastMessage.get();
+            chatGateway.forceUpdateLastMessagePreview(chatId, previousMsg.getContent(), previousMsg.getCreatedAt());
+        } else {
+            chatGateway.forceUpdateLastMessagePreview(chatId, null, null);
+        }
     }
 
     @CacheEvict(value = "messages", key = "#chatId.toString() + '*'", allEntries = false)
@@ -61,12 +77,17 @@ public class MessageUseCase {
             Long userId,
             EditMessageRequest messageRequest
     ) {
-        Message message = messageMapper.editRequestToDomain(messageRequest);
-        message.setChatId(chatId);
-        message.setSenderId(userId);
-        message.setEdited(true);
+        Message existingMessage = messageGateway.findMessageById(messageRequest.id())
+                .orElseThrow(() -> new MessageNotFoundException("Message not found"));
 
-        var editedMessage = messageGateway.updateMessage(message);
+        throwIfUserCannotDeleteTheMessage(userId, existingMessage.getSenderId());
+
+        existingMessage.setContent(messageRequest.content());
+        existingMessage.setEdited(true);
+
+        var editedMessage = messageGateway.updateMessage(existingMessage);
+
+        editedMessage.setMessageType(MessageType.EDIT_MESSAGE);
 
         return messageMapper.domainToResponse(editedMessage);
     }

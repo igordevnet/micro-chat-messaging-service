@@ -3,12 +3,11 @@ package com.microservice.microchatmessagingservice;
 import com.microservice.microchatmessagingservice.application.exceptions.UnauthorizedActionException;
 import com.microservice.microchatmessagingservice.application.gateways.MessageGateway;
 import com.microservice.microchatmessagingservice.application.usecases.MessageUseCase;
-import com.microservice.microchatmessagingservice.controller.dtos.reponse.MessageResponse;
+import com.microservice.microchatmessagingservice.controller.dtos.response.MessageResponse;
 import com.microservice.microchatmessagingservice.controller.dtos.request.EditMessageRequest;
 import com.microservice.microchatmessagingservice.controller.dtos.request.SendMessageRequest;
 import com.microservice.microchatmessagingservice.domain.Message;
 import com.microservice.microchatmessagingservice.infrastructure.persistence.mappers.MessageMapper;
-import com.microservice.microchatmessagingservice.infrastructure.persistence.mongodb.entities.MessageEntity;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,7 +16,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
@@ -53,7 +51,7 @@ class MessageUseCaseTest {
 
         UnauthorizedActionException exception = assertThrows(
                 UnauthorizedActionException.class,
-                () -> messageUseCase.deleteMessage(messageId, hackerUserId)
+                () -> messageUseCase.deleteMessage(chatId, messageId, hackerUserId)
         );
 
         assertEquals("You can't delete this message", exception.getMessage());
@@ -171,7 +169,7 @@ class MessageUseCaseTest {
 
         when(messageGateway.findMessageById(messageId)).thenReturn(Optional.of(messageFromDb));
 
-        messageUseCase.deleteMessage(messageId, userId);
+        messageUseCase.deleteMessage(chatId, messageId, userId);
 
         verify(messageGateway, times(1)).deleteMessage(messageId);
     }

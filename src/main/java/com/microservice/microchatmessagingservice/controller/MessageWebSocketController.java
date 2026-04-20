@@ -2,9 +2,10 @@ package com.microservice.microchatmessagingservice.controller;
 
 import com.microservice.microchatmessagingservice.application.usecases.MessageUseCase;
 import com.microservice.microchatmessagingservice.controller.dtos.request.EditMessageRequest;
-import com.microservice.microchatmessagingservice.controller.dtos.request.MessageDeletedEvent;
+import com.microservice.microchatmessagingservice.controller.dtos.response.MessageDeletedEvent;
 import com.microservice.microchatmessagingservice.controller.dtos.request.SendMessageRequest;
-import com.microservice.microchatmessagingservice.controller.dtos.reponse.MessageResponse;
+import com.microservice.microchatmessagingservice.controller.dtos.response.MessageResponse;
+import com.microservice.microchatmessagingservice.domain.MessageType;
 import com.microservice.microchatmessagingservice.infrastructure.config.UserAuthenticated;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -65,9 +66,9 @@ public class MessageWebSocketController {
         var auth = (UsernamePasswordAuthenticationToken) principal;
         var currentUser = (UserAuthenticated) auth.getPrincipal();
 
-        messageUseCase.deleteMessage(messageId, currentUser.id());
+        messageUseCase.deleteMessage(chatId, messageId, currentUser.id());
 
-        var event = new MessageDeletedEvent(messageId, "DELETED");
+        var event = new MessageDeletedEvent(messageId, MessageType.DELETE_MESSAGE);
 
         messagingTemplate.convertAndSend("/topic/chat/" + chatId, event);
     }

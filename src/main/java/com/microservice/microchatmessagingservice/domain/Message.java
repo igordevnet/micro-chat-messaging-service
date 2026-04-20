@@ -20,6 +20,7 @@ public class Message {
     private String content;
     private Boolean edited;
     private Boolean read;
+    private MessageType messageType;
 
     private LocalDateTime createdAt;
 }
