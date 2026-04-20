@@ -8,6 +8,6 @@ public record SendMessageRequest(
         @NotNull
         String content,
         @NotNull
-        LocalDateTime timestamp
+        LocalDateTime createdAt
 ) {
 }

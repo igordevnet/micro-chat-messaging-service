@@ -21,5 +21,5 @@ public class Message {
     private Boolean edited;
     private Boolean read;
 
-    private LocalDateTime timestamp;
+    private LocalDateTime createdAt;
 }

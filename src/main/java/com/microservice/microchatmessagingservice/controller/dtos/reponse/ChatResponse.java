@@ -12,6 +12,7 @@ public record ChatResponse(
         String chatName,
         ChatType type,
         LocalDateTime createdAt,
+        LocalDateTime updatedAt,
         Instant lastMessageAt,
         String lastMessagePreview,
         List<Long> participants

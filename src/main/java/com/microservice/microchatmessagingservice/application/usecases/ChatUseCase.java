@@ -1,5 +1,6 @@
 package com.microservice.microchatmessagingservice.application.usecases;
 
+import com.microservice.microchatmessagingservice.application.exceptions.UnauthorizedActionException;
 import com.microservice.microchatmessagingservice.application.gateways.ChatGateway;
 import com.microservice.microchatmessagingservice.controller.dtos.reponse.ChatResponse;
 import com.microservice.microchatmessagingservice.controller.dtos.request.ChatRequest;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -33,14 +35,21 @@ public class ChatUseCase {
         Chat chat = chatMapper.requestToDomain(chatRequest);
         chat.setUpdatedAt(LocalDateTime.now());
         chat.setId(chatId);
-        chat.setCreatedAt(LocalDateTime.now());
 
         Chat savedChat = chatGateway.saveChat(chat);
 
         return chatMapper.domainToResponse(savedChat);
     }
 
-    public void deleteChat(UUID chatId) {
+    public void deleteChat(
+            Long userId,
+            UUID chatId
+    ) {
+        Chat chat = chatGateway.getChat(chatId)
+                        .orElseThrow();
+
+        throwIfUserCannotDeleteChat(userId, chat.getParticipants());
+
         chatGateway.deleteChat(chatId);
     }
 
@@ -48,5 +57,11 @@ public class ChatUseCase {
         List<Chat> chats = chatGateway.getChatList(userId);
 
         return chatMapper.domainToResponseList(chats);
+    }
+
+    private void throwIfUserCannotDeleteChat(Long userId, List<Long> participants) {
+        if (!participants.contains(userId)) {
+            throw new UnauthorizedActionException("You are not allowed to delete this chat");
+        }
     }
 }

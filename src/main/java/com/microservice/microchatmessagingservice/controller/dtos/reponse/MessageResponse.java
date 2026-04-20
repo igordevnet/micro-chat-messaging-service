@@ -9,6 +9,6 @@ public record MessageResponse(
         Boolean edited,
         Boolean read,
 
-        LocalDateTime timestamp
+        LocalDateTime createdAt
 ) {
 }
