@@ -31,7 +31,9 @@ public class ChatEntity {
 
     private LocalDateTime createdAt;
 
-    private Instant lastMessageAt;
+    private LocalDateTime updatedAt;
+
+    private LocalDateTime lastMessageAt;
 
     private String lastMessagePreview;
 

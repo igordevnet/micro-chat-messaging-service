@@ -1,6 +1,6 @@
 package com.microservice.microchatmessagingservice.infrastructure.persistence.mappers;
 
-import com.microservice.microchatmessagingservice.controller.dtos.reponse.ChatResponse;
+import com.microservice.microchatmessagingservice.controller.dtos.response.ChatResponse;
 import com.microservice.microchatmessagingservice.controller.dtos.request.ChatRequest;
 import com.microservice.microchatmessagingservice.domain.Chat;
 import com.microservice.microchatmessagingservice.infrastructure.persistence.postgre.entities.ChatEntity;

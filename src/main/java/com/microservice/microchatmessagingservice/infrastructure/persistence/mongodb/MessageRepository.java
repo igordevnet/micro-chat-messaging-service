@@ -7,10 +7,13 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface MessageRepository extends MongoRepository<MessageEntity, String> {
 
     Page<MessageEntity> findByChatIdOrderByCreatedAtDesc(UUID chatId, Pageable pageable);
+
+    Optional<MessageEntity> findFirstByChatIdOrderByCreatedAtDesc(UUID chatId);
 }

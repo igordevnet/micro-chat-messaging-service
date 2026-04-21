@@ -26,7 +26,7 @@ public class Chat {
 
     private LocalDateTime updatedAt;
 
-    private Instant lastMessageAt;
+    private LocalDateTime lastMessageAt;
 
     private String lastMessagePreview;
 

@@ -1,7 +1,7 @@
 package com.microservice.microchatmessagingservice.controller;
 
 import com.microservice.microchatmessagingservice.application.usecases.ChatUseCase;
-import com.microservice.microchatmessagingservice.controller.dtos.reponse.ChatResponse;
+import com.microservice.microchatmessagingservice.controller.dtos.response.ChatResponse;
 import com.microservice.microchatmessagingservice.controller.dtos.request.ChatRequest;
 import com.microservice.microchatmessagingservice.infrastructure.config.UserAuthenticated;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -43,8 +43,13 @@ public class ChatController {
     }
 
     @DeleteMapping("/{chatId}")
-    public ResponseEntity<Void> deleteChat(@PathVariable UUID chatId) {
-        chatUseCase.deleteChat(chatId);
-        return ResponseEntity.noContent().build();
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteChat(
+            @PathVariable UUID chatId,
+             @AuthenticationPrincipal UserAuthenticated currentUser
+    ) {
+        Long userId = currentUser.id();
+
+        chatUseCase.deleteChat(userId, chatId);
     }
 }

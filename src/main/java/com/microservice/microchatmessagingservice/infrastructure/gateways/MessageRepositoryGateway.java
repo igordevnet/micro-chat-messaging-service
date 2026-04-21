@@ -60,4 +60,10 @@ public class MessageRepositoryGateway implements MessageGateway {
 
         return messageEntity.map(messageMapper::entityToDomain);
     }
+
+    @Override
+    public Optional<Message> findLastMessageByChatId(UUID chatId) {
+        return messageRepository.findFirstByChatIdOrderByCreatedAtDesc(chatId)
+                .map(messageMapper::entityToDomain);
+    }
 }

@@ -2,6 +2,7 @@ package com.microservice.microchatmessagingservice.infrastructure.config;
 
 import com.microservice.microchatmessagingservice.application.exceptions.InvalidTokenException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -11,6 +12,7 @@ import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class WebSocketJwtInterceptor implements ChannelInterceptor {
@@ -39,7 +41,10 @@ public class WebSocketJwtInterceptor implements ChannelInterceptor {
 
                     accessor.setUser(authentication);
                 } else {
-                    throw new InvalidTokenException("Invalid token");
+
+                    log.error("Invalid token");
+
+                    return null;
                 }
             }
         }

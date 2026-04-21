@@ -18,4 +18,6 @@ public interface MessageGateway {
     Page<Message> getMessagePage(UUID chatId, Pageable pageable);
 
     Optional<Message> findMessageById(String messageId);
+
+    Optional<Message> findLastMessageByChatId(UUID chatId);
 }

@@ -9,7 +9,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -39,5 +41,21 @@ public class ChatRepositoryGateway implements ChatGateway {
         List<ChatEntity> chatEntities = chatRepository.findAllByParticipants(userId);
 
         return chatMapper.entityToDomainList(chatEntities);
+    }
+
+    @Override
+    public Optional<Chat> getChat(UUID chatId) {
+        return chatRepository.findById(chatId)
+                .map(chatMapper::entityToDomain);
+    }
+
+    @Override
+    public void updateLastMessage(UUID chatId, String preview, LocalDateTime time) {
+        chatRepository.updateLastMessageIfNewer(chatId, preview, time);
+    }
+
+    @Override
+    public void forceUpdateLastMessagePreview(UUID chatId, String preview, LocalDateTime time) {
+        chatRepository.forceUpdateLastMessage(chatId, preview, time);
     }
 }

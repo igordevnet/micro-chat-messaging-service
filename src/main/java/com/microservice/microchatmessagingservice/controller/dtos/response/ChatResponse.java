@@ -1,4 +1,4 @@
-package com.microservice.microchatmessagingservice.controller.dtos.reponse;
+package com.microservice.microchatmessagingservice.controller.dtos.response;
 
 import com.microservice.microchatmessagingservice.domain.ChatType;
 
@@ -12,7 +12,8 @@ public record ChatResponse(
         String chatName,
         ChatType type,
         LocalDateTime createdAt,
-        Instant lastMessageAt,
+        LocalDateTime updatedAt,
+        LocalDateTime lastMessageAt,
         String lastMessagePreview,
         List<Long> participants
 ) {

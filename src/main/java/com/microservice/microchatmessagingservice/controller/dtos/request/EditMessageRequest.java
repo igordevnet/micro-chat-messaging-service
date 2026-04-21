@@ -8,8 +8,6 @@ public record EditMessageRequest(
         @NotNull
         String id,
         @NotNull
-        String content,
-        @NotNull
-        LocalDateTime timestamp
+        String content
 ) {
 }

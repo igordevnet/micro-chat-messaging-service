@@ -1,6 +1,7 @@
 package com.microservice.microchatmessagingservice.infrastructure.persistence.mongodb.entities;
 
 import lombok.Data;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
@@ -16,8 +17,9 @@ public class MessageEntity {
     private UUID chatId;
     private Long senderId;
     private String content;
-    private Boolean edited;
-    private Boolean read;
+    private boolean edited;
+    private boolean read;
 
-    private LocalDateTime timestamp;
+    @CreatedDate
+    private LocalDateTime createdAt;
 }
