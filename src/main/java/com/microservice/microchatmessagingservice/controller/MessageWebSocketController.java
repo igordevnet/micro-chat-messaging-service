@@ -39,7 +39,7 @@ public class MessageWebSocketController {
 
         MessageResponse savedMessage = messageUseCase.saveMessage(chatId, currentUser.id(), request);
 
-        messagingTemplate.convertAndSend("/topic/chat/" + chatId, savedMessage);
+        messagingTemplate.convertAndSend("/exchange/exchange/amq.topic" + chatId, savedMessage);
     }
 
     @MessageMapping("/chat/{chatId}/editMessage")
@@ -54,7 +54,7 @@ public class MessageWebSocketController {
 
         MessageResponse editedMessage = messageUseCase.editMessage(chatId, currentUser.id(), request);
 
-        messagingTemplate.convertAndSend("/topic/chat/" + chatId, editedMessage);
+        messagingTemplate.convertAndSend("/exchange/exchange/amq.topic" + chatId, editedMessage);
     }
 
     @MessageMapping("/chat/{chatId}/deleteMessage")
@@ -71,7 +71,7 @@ public class MessageWebSocketController {
 
         var event = new MessageDeletedEvent(messageId, ActionType.DELETE_MESSAGE);
 
-        messagingTemplate.convertAndSend("/topic/chat/" + chatId, event);
+        messagingTemplate.convertAndSend("/exchange/exchange/amq.topic" + chatId, event);
     }
 
     @MessageMapping("/chat/{chatId}/read")
@@ -84,6 +84,6 @@ public class MessageWebSocketController {
 
         ReadReceiptEvent event = messageUseCase.markMessagesAsRead(chatId, currentUser.id());
 
-        messagingTemplate.convertAndSend("/topic/chat/" + chatId, event);
+        messagingTemplate.convertAndSend("/exchange/exchange/amq.topic" + chatId, event);
     }
 }

@@ -1,6 +1,7 @@
 package com.microservice.microchatmessagingservice.infrastructure.config;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -13,6 +14,9 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
+    @Value("${spring.rabbitmq.host:localhost}")
+    private String rabbitmqHost;
+
     private final WebSocketJwtInterceptor webSocketJwtInterceptor;
 
     @Override
@@ -24,7 +28,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
 
-        registry.enableSimpleBroker("/topic", "/user");
+        registry.enableStompBrokerRelay("/topic", "/queue", "/exchange")
+                .setRelayHost(rabbitmqHost)
+                .setRelayPort(61613)
+                .setClientLogin("guest")
+                .setClientPasscode("guest")
+                .setSystemLogin("guest")
+                .setSystemPasscode("guest")
+                .setSystemHeartbeatSendInterval(10000)
+                .setSystemHeartbeatReceiveInterval(10000);
+
 
         registry.setApplicationDestinationPrefixes("/app");
 

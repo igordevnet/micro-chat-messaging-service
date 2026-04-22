@@ -1,0 +1,80 @@
+services:
+  # Banco de Dados Relacional (Controle de Acesso e Chat)
+  postgres:
+    image: postgres:15-alpine
+    container_name: chat-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: db_micro_chat
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Banco de Dados NoSQL (Metadados e Histórico de Mensagens)
+  mongodb:
+    image: mongo:latest
+    container_name: chat-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongodb_data:/data/db
+
+  # Cache e Pub/Sub
+  redis:
+    image: redis:7-alpine
+    container_name: chat-redis
+    ports:
+      - "6379:6379"
+
+  # Message Broker (STOMP)
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: chat-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+      - "61613:61613"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    command: >
+      sh -c "rabbitmq-plugins enable --offline rabbitmq_stomp && rabbitmq-server"
+
+  # Object Storage (Arquivos de Áudio/Vídeo)
+#  minio:
+#    image: quay.io/minio/minio
+#    container_name: chat-minio
+#    ports:
+#      - "9000:9000"
+#      - "9001:9001"
+#    environment:
+#      MINIO_ROOT_USER: admin
+#      MINIO_ROOT_PASSWORD: password
+#    command: server /data --console-address ":9001"
+
+  # O Microserviço Java
+  api:
+    build: .
+    container_name: chat-messaging-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+      - mongodb
+      - redis
+      - rabbitmq
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/db_micro_chat
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:password@mongodb:27017/micro_chat?authSource=admin
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_MESSAGING_STOMP_RELAY_HOST=rabbitmq
+
+volumes:
+  postgres_data:
+  mongodb_data:
