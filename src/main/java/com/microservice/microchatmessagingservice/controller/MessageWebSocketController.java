@@ -1,11 +1,12 @@
 package com.microservice.microchatmessagingservice.controller;
 
 import com.microservice.microchatmessagingservice.application.usecases.MessageUseCase;
+import com.microservice.microchatmessagingservice.controller.dtos.response.ReadReceiptEvent;
 import com.microservice.microchatmessagingservice.controller.dtos.request.EditMessageRequest;
 import com.microservice.microchatmessagingservice.controller.dtos.response.MessageDeletedEvent;
 import com.microservice.microchatmessagingservice.controller.dtos.request.SendMessageRequest;
 import com.microservice.microchatmessagingservice.controller.dtos.response.MessageResponse;
-import com.microservice.microchatmessagingservice.domain.MessageType;
+import com.microservice.microchatmessagingservice.domain.ActionType;
 import com.microservice.microchatmessagingservice.infrastructure.config.UserAuthenticated;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -68,7 +69,20 @@ public class MessageWebSocketController {
 
         messageUseCase.deleteMessage(chatId, messageId, currentUser.id());
 
-        var event = new MessageDeletedEvent(messageId, MessageType.DELETE_MESSAGE);
+        var event = new MessageDeletedEvent(messageId, ActionType.DELETE_MESSAGE);
+
+        messagingTemplate.convertAndSend("/topic/chat/" + chatId, event);
+    }
+
+    @MessageMapping("/chat/{chatId}/read")
+    public void handleReadReceipt(
+            @DestinationVariable UUID chatId,
+            Principal principal
+    ) {
+        var auth = (UsernamePasswordAuthenticationToken) principal;
+        var currentUser = (UserAuthenticated) auth.getPrincipal();
+
+        ReadReceiptEvent event = messageUseCase.markMessagesAsRead(chatId, currentUser.id());
 
         messagingTemplate.convertAndSend("/topic/chat/" + chatId, event);
     }

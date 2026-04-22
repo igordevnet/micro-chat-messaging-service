@@ -3,13 +3,15 @@ package com.microservice.microchatmessagingservice.application.usecases;
 import com.microservice.microchatmessagingservice.application.exceptions.MessageNotFoundException;
 import com.microservice.microchatmessagingservice.application.exceptions.UnauthorizedActionException;
 import com.microservice.microchatmessagingservice.application.gateways.ChatGateway;
+import com.microservice.microchatmessagingservice.application.gateways.ChatParticipantGateway;
 import com.microservice.microchatmessagingservice.application.gateways.MessageGateway;
+import com.microservice.microchatmessagingservice.controller.dtos.response.ReadReceiptEvent;
 import com.microservice.microchatmessagingservice.controller.dtos.response.MessagePaginatedResponse;
 import com.microservice.microchatmessagingservice.controller.dtos.response.MessageResponse;
 import com.microservice.microchatmessagingservice.controller.dtos.request.EditMessageRequest;
 import com.microservice.microchatmessagingservice.controller.dtos.request.SendMessageRequest;
 import com.microservice.microchatmessagingservice.domain.Message;
-import com.microservice.microchatmessagingservice.domain.MessageType;
+import com.microservice.microchatmessagingservice.domain.ActionType;
 import com.microservice.microchatmessagingservice.infrastructure.persistence.mappers.MessageMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,6 +34,7 @@ import java.util.stream.Collectors;
 public class MessageUseCase {
 
     private final MessageGateway messageGateway;
+    private final ChatParticipantGateway chatParticipantGateway;
     private final ChatGateway chatGateway;
     private final MessageMapper messageMapper;
 
@@ -45,7 +49,7 @@ public class MessageUseCase {
         message.setSenderId(userId);
 
         var savedMessage = messageGateway.saveMessage(message);
-        savedMessage.setMessageType(MessageType.NEW_MESSAGE);
+        savedMessage.setActionType(ActionType.NEW_MESSAGE);
 
         chatGateway.updateLastMessage(chatId, savedMessage.getContent(),  savedMessage.getCreatedAt());
 
@@ -87,7 +91,7 @@ public class MessageUseCase {
 
         var editedMessage = messageGateway.updateMessage(existingMessage);
 
-        editedMessage.setMessageType(MessageType.EDIT_MESSAGE);
+        editedMessage.setActionType(ActionType.EDIT_MESSAGE);
 
         return messageMapper.domainToResponse(editedMessage);
     }
@@ -109,6 +113,24 @@ public class MessageUseCase {
                 messagePage.getTotalPages(),
                 messagePage.getTotalElements()
         );
+    }
+
+
+    public ReadReceiptEvent markMessagesAsRead(UUID chatId, Long userId) {
+        LocalDateTime now = LocalDateTime.now();
+
+        int rowsAffected = chatParticipantGateway.updateLastReadAt(chatId, userId, now);
+
+        if (rowsAffected > 0) {
+            return ReadReceiptEvent.builder()
+                    .userId(userId)
+                    .chatId(chatId)
+                    .time(now)
+                    .actionType(ActionType.READ)
+                    .build();
+        }
+
+        return null;
     }
 
     private void throwIfUserCannotDeleteTheMessage(Long userId, Long senderId) {

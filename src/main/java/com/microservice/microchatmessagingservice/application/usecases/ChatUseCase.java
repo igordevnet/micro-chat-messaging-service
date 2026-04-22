@@ -25,9 +25,12 @@ public class ChatUseCase implements Serializable {
     private final ChatGateway chatGateway;
     private final ChatMapper chatMapper;
 
-    @CacheEvict(value = "userChats", key = "#chatRequest.userId")
-    public ChatResponse createChat(ChatRequest chatRequest) {
+    @CacheEvict(value = "userChats", key = "#userId")
+    public ChatResponse createChat(ChatRequest chatRequest, Long userId) {
         Chat chat = chatMapper.requestToDomain(chatRequest);
+
+        chat.setCreatedAt(LocalDateTime.now());
+        chat.addParticipants(chatRequest.participantIds());
 
         Chat savedChat = chatGateway.saveChat(chat);
 

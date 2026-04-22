@@ -7,8 +7,8 @@ import com.microservice.microchatmessagingservice.application.usecases.MessageUs
 import com.microservice.microchatmessagingservice.controller.dtos.response.MessageResponse;
 import com.microservice.microchatmessagingservice.controller.dtos.request.EditMessageRequest;
 import com.microservice.microchatmessagingservice.controller.dtos.request.SendMessageRequest;
+import com.microservice.microchatmessagingservice.domain.ActionType;
 import com.microservice.microchatmessagingservice.domain.Message;
-import com.microservice.microchatmessagingservice.domain.MessageType;
 import com.microservice.microchatmessagingservice.infrastructure.persistence.mappers.MessageMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -89,7 +89,7 @@ class MessageUseCaseTest {
         savedMessage.setContent(contentText);
         savedMessage.setCreatedAt(LocalDateTime.now());
 
-        MessageResponse expectedResponse = new MessageResponse("msg-123", userId, contentText, false, false, MessageType.NEW_MESSAGE, LocalDateTime.now());
+        MessageResponse expectedResponse = new MessageResponse("msg-123", userId, contentText, false, false, ActionType.NEW_MESSAGE, LocalDateTime.now());
 
         when(messageMapper.sendRequestToDomain(request)).thenReturn(domainMessage);
         when(messageGateway.saveMessage(any(Message.class))).thenReturn(savedMessage);

@@ -21,8 +21,13 @@ public class ChatController {
     private final ChatUseCase chatUseCase;
 
     @PostMapping
-    public ResponseEntity<ChatResponse> createChat(@RequestBody ChatRequest chatRequest) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(chatUseCase.createChat(chatRequest));
+    public ResponseEntity<ChatResponse> createChat(
+            @RequestBody ChatRequest chatRequest,
+            @AuthenticationPrincipal UserAuthenticated currentUser
+    ) {
+        Long userId = currentUser.id();
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(chatUseCase.createChat(chatRequest, userId));
     }
 
     @GetMapping("/user")
@@ -46,7 +51,7 @@ public class ChatController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteChat(
             @PathVariable UUID chatId,
-             @AuthenticationPrincipal UserAuthenticated currentUser
+            @AuthenticationPrincipal UserAuthenticated currentUser
     ) {
         Long userId = currentUser.id();
 

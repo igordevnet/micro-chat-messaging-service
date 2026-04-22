@@ -15,6 +15,7 @@ import java.util.UUID;
 @Repository
 public interface ChatRepository extends JpaRepository<ChatEntity, UUID> {
 
+    @Query("SELECT DISTINCT c FROM ChatEntity c JOIN c.participants p WHERE p.userId = :userId")
     List<ChatEntity> findAllByParticipants(Long userId);
 
     @Modifying
