@@ -9,6 +9,7 @@ import com.microservice.microchatmessagingservice.controller.dtos.response.Messa
 import com.microservice.microchatmessagingservice.domain.ActionType;
 import com.microservice.microchatmessagingservice.infrastructure.config.UserAuthenticated;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -24,8 +25,7 @@ import java.util.UUID;
 public class MessageWebSocketController {
 
     private final MessageUseCase messageUseCase;
-
-    private final SimpMessagingTemplate messagingTemplate;
+    private final RabbitTemplate rabbitTemplate;
 
     @MessageMapping("/chat/{chatId}/sendMessage")
     public void sendMessage(
@@ -39,7 +39,7 @@ public class MessageWebSocketController {
 
         MessageResponse savedMessage = messageUseCase.saveMessage(chatId, currentUser.id(), request);
 
-        messagingTemplate.convertAndSend("/exchange/exchange/amq.topic" + chatId, savedMessage);
+        rabbitTemplate.convertAndSend("chat.topic", "chat.event." + chatId, savedMessage);
     }
 
     @MessageMapping("/chat/{chatId}/editMessage")
@@ -54,7 +54,7 @@ public class MessageWebSocketController {
 
         MessageResponse editedMessage = messageUseCase.editMessage(chatId, currentUser.id(), request);
 
-        messagingTemplate.convertAndSend("/exchange/exchange/amq.topic" + chatId, editedMessage);
+        rabbitTemplate.convertAndSend("chat.topic", "chat.event." + chatId, editedMessage);
     }
 
     @MessageMapping("/chat/{chatId}/deleteMessage")
@@ -69,9 +69,9 @@ public class MessageWebSocketController {
 
         messageUseCase.deleteMessage(chatId, messageId, currentUser.id());
 
-        var event = new MessageDeletedEvent(messageId, ActionType.DELETE_MESSAGE);
+        var event = new MessageDeletedEvent(messageId, chatId, ActionType.DELETE_MESSAGE);
 
-        messagingTemplate.convertAndSend("/exchange/exchange/amq.topic" + chatId, event);
+        rabbitTemplate.convertAndSend("chat.topic", "chat.event." + chatId, event);
     }
 
     @MessageMapping("/chat/{chatId}/read")
@@ -84,6 +84,6 @@ public class MessageWebSocketController {
 
         ReadReceiptEvent event = messageUseCase.markMessagesAsRead(chatId, currentUser.id());
 
-        messagingTemplate.convertAndSend("/exchange/exchange/amq.topic" + chatId, event);
+        rabbitTemplate.convertAndSend("chat.topic", "chat.event." + chatId, event);
     }
 }
