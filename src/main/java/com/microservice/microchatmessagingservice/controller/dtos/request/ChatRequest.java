@@ -10,6 +10,6 @@ public record ChatRequest(
         ChatType type,
 
         @NotNull
-        List<Long> participants
+        List<Long> participantIds
 ) {
 }

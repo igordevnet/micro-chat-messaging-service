@@ -6,7 +6,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -43,6 +42,6 @@ public class ChatEntity {
             joinColumns = @JoinColumn(name = "chat_id"),
             indexes = @Index(name = "idx_participants_user_id", columnList = "user_id")
     )
-    @Column(name = "user_id")
-    private List<Long> participants;
+    @OneToMany(mappedBy = "chat", fetch = FetchType.LAZY)
+    private List<ChatParticipantEntity> participants;
 }

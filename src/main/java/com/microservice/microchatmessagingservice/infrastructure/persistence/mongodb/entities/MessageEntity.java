@@ -18,7 +18,6 @@ public class MessageEntity {
     private Long senderId;
     private String content;
     private boolean edited;
-    private boolean read;
 
     @CreatedDate
     private LocalDateTime createdAt;

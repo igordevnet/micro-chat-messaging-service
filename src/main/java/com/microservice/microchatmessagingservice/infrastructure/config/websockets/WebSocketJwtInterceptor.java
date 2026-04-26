@@ -1,6 +1,7 @@
-package com.microservice.microchatmessagingservice.infrastructure.config;
+package com.microservice.microchatmessagingservice.infrastructure.config.websockets;
 
-import com.microservice.microchatmessagingservice.application.exceptions.InvalidTokenException;
+import com.microservice.microchatmessagingservice.infrastructure.config.JwtService;
+import com.microservice.microchatmessagingservice.infrastructure.config.UserAuthenticated;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;

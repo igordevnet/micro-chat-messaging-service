@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -30,5 +29,15 @@ public class Chat {
 
     private String lastMessagePreview;
 
-    private List<Long> participants;
+    private List<ChatParticipant> participants;
+
+    public void addParticipants(List<Long> userIds) {
+
+        this.participants = userIds.stream()
+                .map(userId -> ChatParticipant.builder()
+                        .userId(userId)
+                        .lastReadAt(LocalDateTime.now())
+                        .build())
+                .toList();
+    }
 }

@@ -1,5 +1,6 @@
 package com.microservice.microchatmessagingservice.controller.dtos.response;
 
+import com.microservice.microchatmessagingservice.domain.ChatParticipant;
 import com.microservice.microchatmessagingservice.domain.ChatType;
 
 import java.time.Instant;
@@ -15,6 +16,6 @@ public record ChatResponse(
         LocalDateTime updatedAt,
         LocalDateTime lastMessageAt,
         String lastMessagePreview,
-        List<Long> participants
+        List<ChatParticipant> participants
 ) {
 }
