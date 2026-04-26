@@ -1,4 +1,4 @@
-package com.microservice.microchatmessagingservice.infrastructure.config;
+package com.microservice.microchatmessagingservice.infrastructure.config.rabbitmq;
 
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;

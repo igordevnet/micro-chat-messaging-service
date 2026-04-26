@@ -1,19 +1,13 @@
 package com.microservice.microchatmessagingservice.controller;
 
 import com.microservice.microchatmessagingservice.application.usecases.MessageUseCase;
-import com.microservice.microchatmessagingservice.controller.dtos.response.ReadReceiptEvent;
 import com.microservice.microchatmessagingservice.controller.dtos.request.EditMessageRequest;
-import com.microservice.microchatmessagingservice.controller.dtos.response.MessageDeletedEvent;
 import com.microservice.microchatmessagingservice.controller.dtos.request.SendMessageRequest;
-import com.microservice.microchatmessagingservice.controller.dtos.response.MessageResponse;
-import com.microservice.microchatmessagingservice.domain.ActionType;
 import com.microservice.microchatmessagingservice.infrastructure.config.UserAuthenticated;
 import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Controller;
 
@@ -25,7 +19,6 @@ import java.util.UUID;
 public class MessageWebSocketController {
 
     private final MessageUseCase messageUseCase;
-    private final RabbitTemplate rabbitTemplate;
 
     @MessageMapping("/chat/{chatId}/sendMessage")
     public void sendMessage(
@@ -37,9 +30,7 @@ public class MessageWebSocketController {
         var auth = (UsernamePasswordAuthenticationToken) principal;
         var currentUser = (UserAuthenticated) auth.getPrincipal();
 
-        MessageResponse savedMessage = messageUseCase.saveMessage(chatId, currentUser.id(), request);
-
-        rabbitTemplate.convertAndSend("chat.topic", "chat.event." + chatId, savedMessage);
+        messageUseCase.saveMessage(chatId, currentUser.id(), request);
     }
 
     @MessageMapping("/chat/{chatId}/editMessage")
@@ -52,9 +43,7 @@ public class MessageWebSocketController {
         var auth = (UsernamePasswordAuthenticationToken) principal;
         var currentUser = (UserAuthenticated) auth.getPrincipal();
 
-        MessageResponse editedMessage = messageUseCase.editMessage(chatId, currentUser.id(), request);
-
-        rabbitTemplate.convertAndSend("chat.topic", "chat.event." + chatId, editedMessage);
+        messageUseCase.editMessage(chatId, currentUser.id(), request);
     }
 
     @MessageMapping("/chat/{chatId}/deleteMessage")
@@ -68,10 +57,6 @@ public class MessageWebSocketController {
         var currentUser = (UserAuthenticated) auth.getPrincipal();
 
         messageUseCase.deleteMessage(chatId, messageId, currentUser.id());
-
-        var event = new MessageDeletedEvent(messageId, chatId, ActionType.DELETE_MESSAGE);
-
-        rabbitTemplate.convertAndSend("chat.topic", "chat.event." + chatId, event);
     }
 
     @MessageMapping("/chat/{chatId}/read")
@@ -82,8 +67,6 @@ public class MessageWebSocketController {
         var auth = (UsernamePasswordAuthenticationToken) principal;
         var currentUser = (UserAuthenticated) auth.getPrincipal();
 
-        ReadReceiptEvent event = messageUseCase.markMessagesAsRead(chatId, currentUser.id());
-
-        rabbitTemplate.convertAndSend("chat.topic", "chat.event." + chatId, event);
+        messageUseCase.markMessagesAsRead(chatId, currentUser.id());
     }
 }

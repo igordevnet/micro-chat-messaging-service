@@ -5,6 +5,7 @@ import com.microservice.microchatmessagingservice.application.exceptions.Unautho
 import com.microservice.microchatmessagingservice.application.gateways.ChatGateway;
 import com.microservice.microchatmessagingservice.application.gateways.ChatParticipantGateway;
 import com.microservice.microchatmessagingservice.application.gateways.MessageGateway;
+import com.microservice.microchatmessagingservice.controller.dtos.response.MessageDeletedEvent;
 import com.microservice.microchatmessagingservice.controller.dtos.response.ReadReceiptEvent;
 import com.microservice.microchatmessagingservice.controller.dtos.response.MessagePaginatedResponse;
 import com.microservice.microchatmessagingservice.controller.dtos.response.MessageResponse;
@@ -15,12 +16,14 @@ import com.microservice.microchatmessagingservice.domain.ActionType;
 import com.microservice.microchatmessagingservice.infrastructure.persistence.mappers.MessageMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -37,26 +40,34 @@ public class MessageUseCase {
     private final ChatParticipantGateway chatParticipantGateway;
     private final ChatGateway chatGateway;
     private final MessageMapper messageMapper;
+    private final RabbitTemplate rabbitTemplate;
 
-    @CacheEvict(value = "messages", key = "#chatId.toString() + '*'", allEntries = false)
-    public MessageResponse saveMessage(
+    @CacheEvict(value = "messages", key = "#chatId.toString() + '*'", allEntries = true)
+    @Transactional
+    public void saveMessage(
             UUID chatId,
             Long userId,
             SendMessageRequest messageRequest
     ) {
+        LocalDateTime now = LocalDateTime.now();
+
         Message message = messageMapper.sendRequestToDomain(messageRequest);
         message.setChatId(chatId);
         message.setSenderId(userId);
+        message.setCreatedAt(now);
 
         var savedMessage = messageGateway.saveMessage(message);
         savedMessage.setActionType(ActionType.NEW_MESSAGE);
 
-        chatGateway.updateLastMessage(chatId, savedMessage.getContent(),  savedMessage.getCreatedAt());
+        chatGateway.updateLastMessage(chatId, savedMessage.getContent(), now);
 
-        return messageMapper.domainToResponse(savedMessage);
+        var messageResponse = messageMapper.domainToResponse(savedMessage);
+
+        rabbitTemplate.convertAndSend("chat.topic", "chat.event." + chatId, messageResponse);
     }
 
-    @CacheEvict(value = "messages", key = "#chatId + '*'", allEntries = false)
+    @CacheEvict(value = "messages", key = "#chatId + '*'", allEntries = true)
+    @Transactional
     public void deleteMessage(UUID chatId, String messageId, Long userId) {
         Message message = messageGateway.findMessageById(messageId)
                 .orElseThrow(() -> new MessageNotFoundException("Message not found"));
@@ -73,10 +84,15 @@ public class MessageUseCase {
         } else {
             chatGateway.forceUpdateLastMessagePreview(chatId, null, null);
         }
+
+        var event = new MessageDeletedEvent(messageId, chatId, ActionType.DELETE_MESSAGE);
+
+        rabbitTemplate.convertAndSend("chat.topic", "chat.event." + chatId, event);
     }
 
-    @CacheEvict(value = "messages", key = "#chatId.toString() + '*'", allEntries = false)
-    public MessageResponse editMessage(
+    @CacheEvict(value = "messages", key = "#chatId.toString() + '*'", allEntries = true)
+    @Transactional
+    public void editMessage(
             UUID chatId,
             Long userId,
             EditMessageRequest messageRequest
@@ -93,7 +109,9 @@ public class MessageUseCase {
 
         editedMessage.setActionType(ActionType.EDIT_MESSAGE);
 
-        return messageMapper.domainToResponse(editedMessage);
+        var messageResponse = messageMapper.domainToResponse(editedMessage);
+
+        rabbitTemplate.convertAndSend("chat.topic", "chat.event." + chatId, messageResponse);
     }
 
     @Cacheable(value = "messages", key = "#chatId.toString() + '_' + #page + '_' + #size")
@@ -115,22 +133,22 @@ public class MessageUseCase {
         );
     }
 
-
-    public ReadReceiptEvent markMessagesAsRead(UUID chatId, Long userId) {
+    @Transactional
+    public void markMessagesAsRead(UUID chatId, Long userId) {
         LocalDateTime now = LocalDateTime.now();
 
         int rowsAffected = chatParticipantGateway.updateLastReadAt(chatId, userId, now);
 
         if (rowsAffected > 0) {
-            return ReadReceiptEvent.builder()
+            var event = ReadReceiptEvent.builder()
                     .userId(userId)
                     .chatId(chatId)
                     .time(now)
                     .actionType(ActionType.READ)
                     .build();
-        }
 
-        return null;
+            rabbitTemplate.convertAndSend("chat.topic", "chat.event." + chatId, event);
+        }
     }
 
     private void throwIfUserCannotDeleteTheMessage(Long userId, Long senderId) {

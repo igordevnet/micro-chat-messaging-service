@@ -1,14 +1,14 @@
 server:
-  port: 8081
+  port: 8082
 
 spring:
   application:
     name: micro-chat-messaging-service
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/db_micro_chat}
-    username: ${SPRING_DATASOURCE_USERNAME:user}
-    password: ${SPRING_DATASOURCE_PASSWORD:password}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/quiz}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -22,7 +22,7 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
   data:
     mongodb:
-      uri: ${SPRING_DATA_MONGODB_URI:mongodb://admin:password@localhost:27017/micro_chat?authSource=admin}
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/chat_messages_db}
 
     redis:
       host: ${SPRING_DATA_REDIS_HOST:localhost}

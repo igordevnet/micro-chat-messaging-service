@@ -1,4 +1,4 @@
-package com.microservice.microchatmessagingservice.infrastructure.config;
+package com.microservice.microchatmessagingservice.infrastructure.config.rabbitmq;
 
 import com.microservice.microchatmessagingservice.controller.dtos.response.MessageDeletedEvent;
 import com.microservice.microchatmessagingservice.controller.dtos.response.MessageResponse;
