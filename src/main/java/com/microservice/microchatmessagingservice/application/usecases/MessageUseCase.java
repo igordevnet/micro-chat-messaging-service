@@ -4,6 +4,7 @@ import com.microservice.microchatmessagingservice.application.exceptions.Message
 import com.microservice.microchatmessagingservice.application.exceptions.UnauthorizedActionException;
 import com.microservice.microchatmessagingservice.application.gateways.ChatGateway;
 import com.microservice.microchatmessagingservice.application.gateways.ChatParticipantGateway;
+import com.microservice.microchatmessagingservice.application.gateways.MessageBrokerGateway;
 import com.microservice.microchatmessagingservice.application.gateways.MessageGateway;
 import com.microservice.microchatmessagingservice.controller.dtos.response.MessageDeletedEvent;
 import com.microservice.microchatmessagingservice.controller.dtos.response.ReadReceiptEvent;
@@ -16,7 +17,6 @@ import com.microservice.microchatmessagingservice.domain.ActionType;
 import com.microservice.microchatmessagingservice.infrastructure.persistence.mappers.MessageMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -40,7 +40,7 @@ public class MessageUseCase {
     private final ChatParticipantGateway chatParticipantGateway;
     private final ChatGateway chatGateway;
     private final MessageMapper messageMapper;
-    private final RabbitTemplate rabbitTemplate;
+    private final MessageBrokerGateway messageBrokerGateway;
 
     @CacheEvict(value = "messages", key = "#chatId.toString() + '*'", allEntries = true)
     @Transactional
@@ -63,7 +63,7 @@ public class MessageUseCase {
 
         var messageResponse = messageMapper.domainToResponse(savedMessage);
 
-        rabbitTemplate.convertAndSend("chat.topic", "chat.event." + chatId, messageResponse);
+        messageBrokerGateway.convertAndSend("chat.topic", "chat.event." + chatId, messageResponse);
     }
 
     @CacheEvict(value = "messages", key = "#chatId + '*'", allEntries = true)
@@ -87,7 +87,7 @@ public class MessageUseCase {
 
         var event = new MessageDeletedEvent(messageId, chatId, ActionType.DELETE_MESSAGE);
 
-        rabbitTemplate.convertAndSend("chat.topic", "chat.event." + chatId, event);
+        messageBrokerGateway.convertAndSend("chat.topic", "chat.event." + chatId, event);
     }
 
     @CacheEvict(value = "messages", key = "#chatId.toString() + '*'", allEntries = true)
@@ -111,7 +111,7 @@ public class MessageUseCase {
 
         var messageResponse = messageMapper.domainToResponse(editedMessage);
 
-        rabbitTemplate.convertAndSend("chat.topic", "chat.event." + chatId, messageResponse);
+        messageBrokerGateway.convertAndSend("chat.topic", "chat.event." + chatId, messageResponse);
     }
 
     @Cacheable(value = "messages", key = "#chatId.toString() + '_' + #page + '_' + #size")
@@ -147,7 +147,7 @@ public class MessageUseCase {
                     .actionType(ActionType.READ)
                     .build();
 
-            rabbitTemplate.convertAndSend("chat.topic", "chat.event." + chatId, event);
+            messageBrokerGateway.convertAndSend("chat.topic", "chat.event." + chatId, event);
         }
     }
 
