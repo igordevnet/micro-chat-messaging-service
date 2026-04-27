@@ -79,6 +79,10 @@ public class MessageUseCase {
 
         throwIfUserCannotDeleteTheMessage(userId, message.getSenderId());
 
+        if (message.getMessageType() == MessageType.FILE && message.getAttachment() != null) {
+            fileStorageGateway.delete(message.getAttachment().getKey());
+        }
+
         messageGateway.deleteMessage(messageId);
 
         Optional<Message> newLastMessage = messageGateway.findLastMessageByChatId(chatId);
@@ -119,15 +123,18 @@ public class MessageUseCase {
         messageBrokerGateway.convertAndSend("chat.topic", "chat.event." + chatId, messageResponse);
     }
 
-    @Cacheable(value = "messages", key = "#chatId.toString() + '_' + #page + '_' + #size")
     public MessagePaginatedResponse getMessages(UUID chatId, int page, int size) {
-
-        Pageable pageable = PageRequest.of(page, size);
-
-        Page<Message> messagePage = messageGateway.getMessagePage(chatId, pageable);
+        Page<Message> messagePage = getCachedMessages(chatId, page, size);
 
         List<MessageResponse> responses = messagePage.getContent().stream()
-                .map(messageMapper::domainToResponse)
+                .map(message -> {
+                    if (message.getAttachment() != null) {
+                        String freshUrl = fileStorageGateway.generatePresignedUrl(message.getAttachment().getKey());
+
+                        message.getAttachment().setUrl(freshUrl);
+                    }
+                    return messageMapper.domainToResponse(message);
+                })
                 .collect(Collectors.toList());
 
         return new MessagePaginatedResponse(
@@ -154,6 +161,14 @@ public class MessageUseCase {
 
             messageBrokerGateway.convertAndSend("chat.topic", "chat.event." + chatId, event);
         }
+    }
+
+    @Cacheable(value = "messages", key = "#chatId.toString() + '_' + #page + '_' + #size")
+    private Page<Message> getCachedMessages(UUID chatId, int page, int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        return messageGateway.getMessagePage(chatId, pageable);
     }
 
     private void throwIfUserCannotDeleteTheMessage(Long userId, Long senderId) {

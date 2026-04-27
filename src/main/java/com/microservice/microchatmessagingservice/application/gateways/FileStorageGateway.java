@@ -7,4 +7,6 @@ import java.util.UUID;
 
 public interface FileStorageGateway {
     Attachment store(MultipartFile file, UUID chatId);
+    void delete(String key);
+    String generatePresignedUrl(String key);
 }

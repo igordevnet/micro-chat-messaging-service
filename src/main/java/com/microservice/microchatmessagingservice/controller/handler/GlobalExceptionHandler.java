@@ -1,9 +1,6 @@
 package com.microservice.microchatmessagingservice.controller.handler;
 
-import com.microservice.microchatmessagingservice.application.exceptions.FailedUploadException;
-import com.microservice.microchatmessagingservice.application.exceptions.InvalidTokenException;
-import com.microservice.microchatmessagingservice.application.exceptions.MessageNotFoundException;
-import com.microservice.microchatmessagingservice.application.exceptions.UnauthorizedActionException;
+import com.microservice.microchatmessagingservice.application.exceptions.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -54,6 +51,18 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(FailedUploadException.class)
     public ResponseEntity<StandardError> handleFailedUploadException(FailedUploadException ex, HttpServletRequest request) {
+        var response = StandardError.builder()
+                .error(ex.getMessage())
+                .path(request.getRequestURI())
+                .timestamp(LocalDate.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(FailedDeleteException.class)
+    public ResponseEntity<StandardError> handleFailedDeleteException(FailedDeleteException ex, HttpServletRequest request) {
         var response = StandardError.builder()
                 .error(ex.getMessage())
                 .path(request.getRequestURI())

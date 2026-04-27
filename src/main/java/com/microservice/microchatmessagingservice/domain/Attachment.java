@@ -14,5 +14,6 @@ public class Attachment {
     private String fileName;
     private String contentType;
     private Long size;
+    private String key;
     private String url;
 }

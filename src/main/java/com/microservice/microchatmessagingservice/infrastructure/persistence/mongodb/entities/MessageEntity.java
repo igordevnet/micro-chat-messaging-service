@@ -1,6 +1,5 @@
 package com.microservice.microchatmessagingservice.infrastructure.persistence.mongodb.entities;
 
-import com.microservice.microchatmessagingservice.domain.Attachment;
 import com.microservice.microchatmessagingservice.domain.enums.MessageType;
 import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
@@ -21,7 +20,7 @@ public class MessageEntity {
     private String content;
     private boolean edited;
 
-    private Attachment attachment;
+    private AttachmentEntity attachment;
     private MessageType messageType;
 
     @CreatedDate
