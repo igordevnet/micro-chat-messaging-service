@@ -1,9 +1,8 @@
 package com.microservice.microchatmessagingservice.controller.dtos.response;
 
 import com.microservice.microchatmessagingservice.domain.ChatParticipant;
-import com.microservice.microchatmessagingservice.domain.ChatType;
+import com.microservice.microchatmessagingservice.domain.enums.ChatType;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;

@@ -2,18 +2,17 @@ package com.microservice.microchatmessagingservice.application.usecases;
 
 import com.microservice.microchatmessagingservice.application.exceptions.MessageNotFoundException;
 import com.microservice.microchatmessagingservice.application.exceptions.UnauthorizedActionException;
-import com.microservice.microchatmessagingservice.application.gateways.ChatGateway;
-import com.microservice.microchatmessagingservice.application.gateways.ChatParticipantGateway;
-import com.microservice.microchatmessagingservice.application.gateways.MessageBrokerGateway;
-import com.microservice.microchatmessagingservice.application.gateways.MessageGateway;
+import com.microservice.microchatmessagingservice.application.gateways.*;
 import com.microservice.microchatmessagingservice.controller.dtos.response.MessageDeletedEvent;
 import com.microservice.microchatmessagingservice.controller.dtos.response.ReadReceiptEvent;
 import com.microservice.microchatmessagingservice.controller.dtos.response.MessagePaginatedResponse;
 import com.microservice.microchatmessagingservice.controller.dtos.response.MessageResponse;
 import com.microservice.microchatmessagingservice.controller.dtos.request.EditMessageRequest;
 import com.microservice.microchatmessagingservice.controller.dtos.request.SendMessageRequest;
+import com.microservice.microchatmessagingservice.domain.Attachment;
 import com.microservice.microchatmessagingservice.domain.Message;
-import com.microservice.microchatmessagingservice.domain.ActionType;
+import com.microservice.microchatmessagingservice.domain.enums.ActionType;
+import com.microservice.microchatmessagingservice.domain.enums.MessageType;
 import com.microservice.microchatmessagingservice.infrastructure.persistence.mappers.MessageMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +23,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,13 +41,15 @@ public class MessageUseCase {
     private final ChatGateway chatGateway;
     private final MessageMapper messageMapper;
     private final MessageBrokerGateway messageBrokerGateway;
+    private final FileStorageGateway fileStorageGateway;
 
     @CacheEvict(value = "messages", key = "#chatId.toString() + '*'", allEntries = true)
     @Transactional
     public void saveMessage(
             UUID chatId,
             Long userId,
-            SendMessageRequest messageRequest
+            SendMessageRequest messageRequest,
+            MultipartFile file
     ) {
         LocalDateTime now = LocalDateTime.now();
 
@@ -56,10 +58,13 @@ public class MessageUseCase {
         message.setSenderId(userId);
         message.setCreatedAt(now);
 
-        var savedMessage = messageGateway.saveMessage(message);
+        var handledMessage = handleMessageType(message, file);
+
+        var savedMessage = messageGateway.saveMessage(handledMessage);
         savedMessage.setActionType(ActionType.NEW_MESSAGE);
 
-        chatGateway.updateLastMessage(chatId, savedMessage.getContent(), now);
+        String preview = determinePreview(savedMessage);
+        chatGateway.updateLastMessage(chatId, preview, now);
 
         var messageResponse = messageMapper.domainToResponse(savedMessage);
 
@@ -155,5 +160,27 @@ public class MessageUseCase {
         if (!senderId.equals(userId)) {
             throw new UnauthorizedActionException("You can't delete this message");
         }
+    }
+
+    private Message handleMessageType(Message message, MultipartFile file) {
+
+        if (file != null && !file.isEmpty()) {
+            Attachment attachment = fileStorageGateway.store(file, message.getChatId());
+
+            message.setAttachment(attachment);
+
+            message.setMessageType(MessageType.FILE);
+        } else {
+            message.setMessageType(MessageType.TEXT);
+        }
+
+        return message;
+    }
+
+    private String determinePreview(Message message) {
+        if (message.getMessageType() == MessageType.FILE && message.getAttachment() != null) {
+            return "📎 Attachment: " + message.getAttachment().getFileName();
+        }
+        return message.getContent();
     }
 }

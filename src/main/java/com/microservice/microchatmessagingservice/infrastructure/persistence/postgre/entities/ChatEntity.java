@@ -1,6 +1,6 @@
 package com.microservice.microchatmessagingservice.infrastructure.persistence.postgre.entities;
 
-import com.microservice.microchatmessagingservice.domain.ChatType;
+import com.microservice.microchatmessagingservice.domain.enums.ChatType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

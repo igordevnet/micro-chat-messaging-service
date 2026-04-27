@@ -1,5 +1,6 @@
 package com.microservice.microchatmessagingservice.domain;
 
+import com.microservice.microchatmessagingservice.domain.enums.ChatType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

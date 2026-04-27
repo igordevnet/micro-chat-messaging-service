@@ -1,4 +1,4 @@
-package com.microservice.microchatmessagingservice.domain;
+package com.microservice.microchatmessagingservice.domain.enums;
 
 public enum ActionType {
     NEW_MESSAGE,

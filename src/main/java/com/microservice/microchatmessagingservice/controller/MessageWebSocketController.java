@@ -30,7 +30,7 @@ public class MessageWebSocketController {
         var auth = (UsernamePasswordAuthenticationToken) principal;
         var currentUser = (UserAuthenticated) auth.getPrincipal();
 
-        messageUseCase.saveMessage(chatId, currentUser.id(), request);
+        messageUseCase.saveMessage(chatId, currentUser.id(), request, null);
     }
 
     @MessageMapping("/chat/{chatId}/editMessage")

@@ -38,3 +38,9 @@ api:
   security:
     token:
       secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+
+minio:
+  endpoint: ${MINIO_URL:http://localhost:9000}
+  access-key: ${MINIO_KEY:admin}
+  secret-key: ${MINIO_SECRET:password}
+  bucket-name: ${STORAGE_BUCKET:chat-attachments}
