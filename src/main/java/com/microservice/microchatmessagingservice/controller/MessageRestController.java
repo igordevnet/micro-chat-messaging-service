@@ -1,6 +1,7 @@
 package com.microservice.microchatmessagingservice.controller;
 
 import com.microservice.microchatmessagingservice.application.usecases.MessageUseCase;
+import com.microservice.microchatmessagingservice.controller.dtos.request.SendAudioRequest;
 import com.microservice.microchatmessagingservice.controller.dtos.request.SendMessageRequest;
 import com.microservice.microchatmessagingservice.controller.dtos.response.MessagePaginatedResponse;
 import com.microservice.microchatmessagingservice.infrastructure.config.UserAuthenticated;
@@ -38,6 +39,17 @@ public class MessageRestController {
             @AuthenticationPrincipal UserAuthenticated user
     ) {
         messageUseCase.saveMessage(chatId, user.id(), request, file);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @PostMapping(value = "/{chatId}/audio", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Void> sendAudio(
+            @PathVariable UUID chatId,
+            @RequestPart("data") SendAudioRequest request,
+            @RequestPart("file") MultipartFile file,
+            @AuthenticationPrincipal UserAuthenticated user
+    ) {
+        messageUseCase.saveAudioMessage(chatId, user.id(), request, file);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 }

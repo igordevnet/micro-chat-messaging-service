@@ -4,5 +4,6 @@ public record AttachmentResponse(
         String fileName,
         String contentType,
         Long size,
-        String url
+        String url,
+        Double duration
 ) {}

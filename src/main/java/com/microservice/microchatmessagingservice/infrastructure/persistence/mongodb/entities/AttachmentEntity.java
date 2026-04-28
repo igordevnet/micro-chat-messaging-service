@@ -9,4 +9,5 @@ public class AttachmentEntity {
     private String contentType;
     private Long size;
     private String key;
+    private Double duration;
 }

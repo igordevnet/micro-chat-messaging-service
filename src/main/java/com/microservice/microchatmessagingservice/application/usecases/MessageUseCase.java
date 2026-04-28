@@ -3,6 +3,7 @@ package com.microservice.microchatmessagingservice.application.usecases;
 import com.microservice.microchatmessagingservice.application.exceptions.MessageNotFoundException;
 import com.microservice.microchatmessagingservice.application.exceptions.UnauthorizedActionException;
 import com.microservice.microchatmessagingservice.application.gateways.*;
+import com.microservice.microchatmessagingservice.controller.dtos.request.SendAudioRequest;
 import com.microservice.microchatmessagingservice.controller.dtos.response.MessageDeletedEvent;
 import com.microservice.microchatmessagingservice.controller.dtos.response.ReadReceiptEvent;
 import com.microservice.microchatmessagingservice.controller.dtos.response.MessagePaginatedResponse;
@@ -123,6 +124,39 @@ public class MessageUseCase {
         messageBrokerGateway.convertAndSend("chat.topic", "chat.event." + chatId, messageResponse);
     }
 
+    @CacheEvict(value = "messages", key = "#chatId.toString() + '*'", allEntries = true)
+    @Transactional
+    public void saveAudioMessage(UUID chatId, Long userId, SendAudioRequest request, MultipartFile file) {
+
+        LocalDateTime now = LocalDateTime.now();
+        Attachment attachment = fileStorageGateway.store(file, chatId);
+
+        Attachment audioAttachment = Attachment.builder()
+                .key(attachment.getKey())
+                .contentType(attachment.getContentType())
+                .fileName(attachment.getFileName())
+                .duration(request.duration())
+                .size(attachment.getSize())
+                .build();
+
+        Message message = Message.builder()
+                .chatId(chatId)
+                .senderId(userId)
+                .messageType(MessageType.AUDIO)
+                .attachment(audioAttachment)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        messageGateway.saveMessage(message);
+
+        String preview = determinePreview(message);
+        chatGateway.updateLastMessage(chatId, preview, now);
+
+        var response = messageMapper.domainToResponse(message);
+
+        messageBrokerGateway.convertAndSend("chat.topic", "chat.event." + chatId, response);
+    }
+
     public MessagePaginatedResponse getMessages(UUID chatId, int page, int size) {
         Page<Message> messagePage = getCachedMessages(chatId, page, size);
 
@@ -195,6 +229,9 @@ public class MessageUseCase {
     private String determinePreview(Message message) {
         if (message.getMessageType() == MessageType.FILE && message.getAttachment() != null) {
             return "📎 Attachment: " + message.getAttachment().getFileName();
+        }
+        if (message.getMessageType() == MessageType.AUDIO && message.getAttachment() != null) {
+            return "New audio";
         }
         return message.getContent();
     }
