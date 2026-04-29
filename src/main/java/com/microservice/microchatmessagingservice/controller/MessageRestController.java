@@ -16,7 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/message")
+@RequestMapping("/api/message")
 @RequiredArgsConstructor
 public class MessageRestController {
 

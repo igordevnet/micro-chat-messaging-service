@@ -30,7 +30,7 @@ public class CallUseCase {
 
         messageBrokerGateway.convertAndSend(
                 "chat.topic",
-                "chat.event." + request.targetId().toString(),
+                "chat.event." + request.targetId(),
                 signalingPayload
         );
 

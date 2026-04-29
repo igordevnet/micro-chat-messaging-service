@@ -6,8 +6,10 @@ import com.microservice.microchatmessagingservice.infrastructure.config.UserAuth
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Controller;
+
+import java.security.Principal;
 
 @Controller
 @RequiredArgsConstructor
@@ -18,8 +20,11 @@ public class CallWebSocketController {
     @MessageMapping("/call/signaling")
     public void handleSignaling(
             @Payload SignalingRequest request,
-            @AuthenticationPrincipal UserAuthenticated user
+            Principal principal
     ) {
-        callUseCase.handleCall(request, user.id());
+        var auth = (UsernamePasswordAuthenticationToken) principal;
+        var currentUser = (UserAuthenticated) auth.getPrincipal();
+
+        callUseCase.handleCall(request, currentUser.id());
     }
 }
