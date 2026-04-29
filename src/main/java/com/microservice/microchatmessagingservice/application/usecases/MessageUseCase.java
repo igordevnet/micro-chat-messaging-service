@@ -2,18 +2,18 @@ package com.microservice.microchatmessagingservice.application.usecases;
 
 import com.microservice.microchatmessagingservice.application.exceptions.MessageNotFoundException;
 import com.microservice.microchatmessagingservice.application.exceptions.UnauthorizedActionException;
-import com.microservice.microchatmessagingservice.application.gateways.ChatGateway;
-import com.microservice.microchatmessagingservice.application.gateways.ChatParticipantGateway;
-import com.microservice.microchatmessagingservice.application.gateways.MessageBrokerGateway;
-import com.microservice.microchatmessagingservice.application.gateways.MessageGateway;
+import com.microservice.microchatmessagingservice.application.gateways.*;
+import com.microservice.microchatmessagingservice.controller.dtos.request.SendAudioRequest;
 import com.microservice.microchatmessagingservice.controller.dtos.response.MessageDeletedEvent;
 import com.microservice.microchatmessagingservice.controller.dtos.response.ReadReceiptEvent;
 import com.microservice.microchatmessagingservice.controller.dtos.response.MessagePaginatedResponse;
 import com.microservice.microchatmessagingservice.controller.dtos.response.MessageResponse;
 import com.microservice.microchatmessagingservice.controller.dtos.request.EditMessageRequest;
 import com.microservice.microchatmessagingservice.controller.dtos.request.SendMessageRequest;
+import com.microservice.microchatmessagingservice.domain.Attachment;
 import com.microservice.microchatmessagingservice.domain.Message;
-import com.microservice.microchatmessagingservice.domain.ActionType;
+import com.microservice.microchatmessagingservice.domain.enums.ActionType;
+import com.microservice.microchatmessagingservice.domain.enums.MessageType;
 import com.microservice.microchatmessagingservice.infrastructure.persistence.mappers.MessageMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +24,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,25 +42,26 @@ public class MessageUseCase {
     private final ChatGateway chatGateway;
     private final MessageMapper messageMapper;
     private final MessageBrokerGateway messageBrokerGateway;
+    private final FileStorageGateway fileStorageGateway;
 
     @CacheEvict(value = "messages", key = "#chatId.toString() + '*'", allEntries = true)
     @Transactional
     public void saveMessage(
             UUID chatId,
             Long userId,
-            SendMessageRequest messageRequest
+            SendMessageRequest messageRequest,
+            MultipartFile file
     ) {
-        LocalDateTime now = LocalDateTime.now();
-
         Message message = messageMapper.sendRequestToDomain(messageRequest);
         message.setChatId(chatId);
         message.setSenderId(userId);
-        message.setCreatedAt(now);
 
-        var savedMessage = messageGateway.saveMessage(message);
+        var handledMessage = handleMessageType(message, file);
+
+        var savedMessage = messageGateway.saveMessage(handledMessage);
         savedMessage.setActionType(ActionType.NEW_MESSAGE);
 
-        chatGateway.updateLastMessage(chatId, savedMessage.getContent(), now);
+        determinePreviewAndUpdateLastMessage(message, chatId);
 
         var messageResponse = messageMapper.domainToResponse(savedMessage);
 
@@ -73,6 +75,10 @@ public class MessageUseCase {
                 .orElseThrow(() -> new MessageNotFoundException("Message not found"));
 
         throwIfUserCannotDeleteTheMessage(userId, message.getSenderId());
+
+        if (message.getMessageType() == MessageType.FILE && message.getAttachment() != null) {
+            fileStorageGateway.delete(message.getAttachment().getKey());
+        }
 
         messageGateway.deleteMessage(messageId);
 
@@ -114,15 +120,50 @@ public class MessageUseCase {
         messageBrokerGateway.convertAndSend("chat.topic", "chat.event." + chatId, messageResponse);
     }
 
-    @Cacheable(value = "messages", key = "#chatId.toString() + '_' + #page + '_' + #size")
+    @CacheEvict(value = "messages", key = "#chatId.toString() + '*'", allEntries = true)
+    @Transactional
+    public void saveAudioMessage(UUID chatId, Long userId, SendAudioRequest request, MultipartFile file) {
+
+        LocalDateTime now = LocalDateTime.now();
+        Attachment attachment = fileStorageGateway.store(file, chatId);
+
+        Attachment audioAttachment = Attachment.builder()
+                .key(attachment.getKey())
+                .contentType(attachment.getContentType())
+                .fileName(attachment.getFileName())
+                .duration(request.duration())
+                .size(attachment.getSize())
+                .build();
+
+        Message message = Message.builder()
+                .chatId(chatId)
+                .senderId(userId)
+                .messageType(MessageType.AUDIO)
+                .attachment(audioAttachment)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        messageGateway.saveMessage(message);
+
+        determinePreviewAndUpdateLastMessage(message, chatId);
+
+        var response = messageMapper.domainToResponse(message);
+
+        messageBrokerGateway.convertAndSend("chat.topic", "chat.event." + chatId, response);
+    }
+
     public MessagePaginatedResponse getMessages(UUID chatId, int page, int size) {
-
-        Pageable pageable = PageRequest.of(page, size);
-
-        Page<Message> messagePage = messageGateway.getMessagePage(chatId, pageable);
+        Page<Message> messagePage = getCachedMessages(chatId, page, size);
 
         List<MessageResponse> responses = messagePage.getContent().stream()
-                .map(messageMapper::domainToResponse)
+                .map(message -> {
+                    if (message.getAttachment() != null) {
+                        String freshUrl = fileStorageGateway.generatePresignedUrl(message.getAttachment().getKey());
+
+                        message.getAttachment().setUrl(freshUrl);
+                    }
+                    return messageMapper.domainToResponse(message);
+                })
                 .collect(Collectors.toList());
 
         return new MessagePaginatedResponse(
@@ -151,9 +192,44 @@ public class MessageUseCase {
         }
     }
 
+    @Cacheable(value = "messages", key = "#chatId.toString() + '_' + #page + '_' + #size")
+    private Page<Message> getCachedMessages(UUID chatId, int page, int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        return messageGateway.getMessagePage(chatId, pageable);
+    }
+
     private void throwIfUserCannotDeleteTheMessage(Long userId, Long senderId) {
         if (!senderId.equals(userId)) {
             throw new UnauthorizedActionException("You can't delete this message");
         }
+    }
+
+    private Message handleMessageType(Message message, MultipartFile file) {
+        if (file != null && !file.isEmpty()) {
+            Attachment attachment = fileStorageGateway.store(file, message.getChatId());
+
+            message.setAttachment(attachment);
+        }
+        return message;
+    }
+
+    private void determinePreviewAndUpdateLastMessage(Message message, UUID chatId) {
+        LocalDateTime now = LocalDateTime.now();
+
+        String preview = determinePreview(message);
+
+        chatGateway.updateLastMessage(chatId, preview, now);
+    }
+
+    private String determinePreview(Message message) {
+        if (message.getMessageType() == MessageType.FILE && message.getAttachment() != null) {
+            return "📎 Attachment: " + message.getAttachment().getFileName();
+        }
+        if (message.getMessageType() == MessageType.AUDIO && message.getAttachment() != null) {
+            return "New audio";
+        }
+        return message.getContent();
     }
 }

@@ -1,5 +1,4 @@
 services:
-  # Banco de Dados Relacional (Controle de Acesso e Chat)
   postgres:
     image: postgres:15-alpine
     container_name: chat-postgres
@@ -12,7 +11,6 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  # Banco de Dados NoSQL (Metadados e Histórico de Mensagens)
   mongodb:
     image: mongo:latest
     container_name: chat-mongodb
@@ -24,14 +22,12 @@ services:
     volumes:
       - mongodb_data:/data/db
 
-  # Cache e Pub/Sub
   redis:
     image: redis:7-alpine
     container_name: chat-redis
     ports:
       - "6379:6379"
 
-  # Message Broker (STOMP)
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: chat-rabbitmq
@@ -45,19 +41,19 @@ services:
     command: >
       sh -c "rabbitmq-plugins enable --offline rabbitmq_stomp && rabbitmq-server"
 
-  # Object Storage (Arquivos de Áudio/Vídeo)
-#  minio:
-#    image: quay.io/minio/minio
-#    container_name: chat-minio
-#    ports:
-#      - "9000:9000"
-#      - "9001:9001"
-#    environment:
-#      MINIO_ROOT_USER: admin
-#      MINIO_ROOT_PASSWORD: password
-#    command: server /data --console-address ":9001"
+  minio:
+    image: quay.io/minio/minio
+    container_name: chat-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
 
-  # O Microserviço Java
   api:
     build: .
     container_name: chat-messaging-service
@@ -78,3 +74,4 @@ services:
 volumes:
   postgres_data:
   mongodb_data:
+  minio_data:

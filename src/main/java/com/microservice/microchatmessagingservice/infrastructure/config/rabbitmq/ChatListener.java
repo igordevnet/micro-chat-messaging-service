@@ -3,12 +3,15 @@ package com.microservice.microchatmessagingservice.infrastructure.config.rabbitm
 import com.microservice.microchatmessagingservice.controller.dtos.response.MessageDeletedEvent;
 import com.microservice.microchatmessagingservice.controller.dtos.response.MessageResponse;
 import com.microservice.microchatmessagingservice.controller.dtos.response.ReadReceiptEvent;
+import com.microservice.microchatmessagingservice.controller.dtos.response.SignalingPayload;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @RabbitListener(queues = "#{autoDeleteQueue.name}")
@@ -20,25 +23,32 @@ public class ChatListener {
     public void handleMessage(MessageResponse message) {
         String destination = "/topic/chat." + message.chatId();
         messagingTemplate.convertAndSend(destination, message);
-        System.out.println("Message sent to: " + destination);
+        log.debug("Message sent to: {}", destination);
     }
 
     @RabbitHandler
     public void handleReadReceipt(ReadReceiptEvent event) {
         String destination = "/topic/chat." + event.chatId();
         messagingTemplate.convertAndSend(destination, event);
-        System.out.println("Read Event sent to: " + destination);
+        log.debug("Read Event sent to: {}", destination);
     }
 
     @RabbitHandler
     public void handleDelete(MessageDeletedEvent event) {
         String destination = "/topic/chat." + event.chatId();
         messagingTemplate.convertAndSend(destination, event);
-        System.out.println("Delete event sent to: " + destination);
+        log.debug("Delete event sent to: {}", destination);
+    }
+
+    @RabbitHandler
+    public void handleCall(SignalingPayload signalingPayload) {
+        String destination = "/queue/signaling." + signalingPayload.targetId();
+        messagingTemplate.convertAndSend(destination, signalingPayload);
+        log.debug("Call event sent to: {}", destination);
     }
 
     @RabbitHandler(isDefault = true)
     public void onDefault(Object object) {
-        System.out.println("Unknown event: " + object);
+        log.debug("Unknown event: {}", object);
     }
 }

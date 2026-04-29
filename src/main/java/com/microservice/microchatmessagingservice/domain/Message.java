@@ -1,5 +1,7 @@
 package com.microservice.microchatmessagingservice.domain;
 
+import com.microservice.microchatmessagingservice.domain.enums.ActionType;
+import com.microservice.microchatmessagingservice.domain.enums.MessageType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,6 +22,9 @@ public class Message {
     private String content;
     private Boolean edited;
     private ActionType actionType;
+
+    private Attachment attachment;
+    private MessageType messageType;
 
     private LocalDateTime createdAt;
 }

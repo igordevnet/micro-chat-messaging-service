@@ -1,5 +1,6 @@
 package com.microservice.microchatmessagingservice.infrastructure.persistence.mongodb.entities;
 
+import com.microservice.microchatmessagingservice.domain.enums.MessageType;
 import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
@@ -18,6 +19,9 @@ public class MessageEntity {
     private Long senderId;
     private String content;
     private boolean edited;
+
+    private AttachmentEntity attachment;
+    private MessageType messageType;
 
     @CreatedDate
     private LocalDateTime createdAt;

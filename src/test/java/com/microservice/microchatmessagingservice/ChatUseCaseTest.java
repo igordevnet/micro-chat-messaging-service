@@ -5,7 +5,7 @@ import com.microservice.microchatmessagingservice.application.usecases.ChatUseCa
 import com.microservice.microchatmessagingservice.controller.dtos.response.ChatResponse;
 import com.microservice.microchatmessagingservice.controller.dtos.request.ChatRequest;
 import com.microservice.microchatmessagingservice.domain.Chat;
-import com.microservice.microchatmessagingservice.domain.ChatType;
+import com.microservice.microchatmessagingservice.domain.enums.ChatType;
 import com.microservice.microchatmessagingservice.infrastructure.persistence.mappers.ChatMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

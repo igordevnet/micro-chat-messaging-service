@@ -1,6 +1,6 @@
 package com.microservice.microchatmessagingservice.controller.dtos.response;
 
-import com.microservice.microchatmessagingservice.domain.ActionType;
+import com.microservice.microchatmessagingservice.domain.enums.ActionType;
 
 import java.util.UUID;
 
