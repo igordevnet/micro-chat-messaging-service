@@ -52,20 +52,16 @@ public class MessageUseCase {
             SendMessageRequest messageRequest,
             MultipartFile file
     ) {
-        LocalDateTime now = LocalDateTime.now();
-
         Message message = messageMapper.sendRequestToDomain(messageRequest);
         message.setChatId(chatId);
         message.setSenderId(userId);
-        message.setCreatedAt(now);
 
         var handledMessage = handleMessageType(message, file);
 
         var savedMessage = messageGateway.saveMessage(handledMessage);
         savedMessage.setActionType(ActionType.NEW_MESSAGE);
 
-        String preview = determinePreview(savedMessage);
-        chatGateway.updateLastMessage(chatId, preview, now);
+        determinePreviewAndUpdateLastMessage(message, chatId);
 
         var messageResponse = messageMapper.domainToResponse(savedMessage);
 
@@ -149,8 +145,7 @@ public class MessageUseCase {
 
         messageGateway.saveMessage(message);
 
-        String preview = determinePreview(message);
-        chatGateway.updateLastMessage(chatId, preview, now);
+        determinePreviewAndUpdateLastMessage(message, chatId);
 
         var response = messageMapper.domainToResponse(message);
 
@@ -212,18 +207,20 @@ public class MessageUseCase {
     }
 
     private Message handleMessageType(Message message, MultipartFile file) {
-
         if (file != null && !file.isEmpty()) {
             Attachment attachment = fileStorageGateway.store(file, message.getChatId());
 
             message.setAttachment(attachment);
-
-            message.setMessageType(MessageType.FILE);
-        } else {
-            message.setMessageType(MessageType.TEXT);
         }
-
         return message;
+    }
+
+    private void determinePreviewAndUpdateLastMessage(Message message, UUID chatId) {
+        LocalDateTime now = LocalDateTime.now();
+
+        String preview = determinePreview(message);
+
+        chatGateway.updateLastMessage(chatId, preview, now);
     }
 
     private String determinePreview(Message message) {
