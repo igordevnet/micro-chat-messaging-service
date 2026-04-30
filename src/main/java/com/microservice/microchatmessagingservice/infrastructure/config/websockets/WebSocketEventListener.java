@@ -1,7 +1,7 @@
 package com.microservice.microchatmessagingservice.infrastructure.config.websockets;
 
 import com.microservice.microchatmessagingservice.application.gateways.MessageBrokerGateway;
-import com.microservice.microchatmessagingservice.application.gateways.RedisPresenceGateway;
+import com.microservice.microchatmessagingservice.application.gateways.CacheGateway;
 import com.microservice.microchatmessagingservice.controller.dtos.response.UserStatusEvent;
 import com.microservice.microchatmessagingservice.domain.enums.Status;
 import com.microservice.microchatmessagingservice.infrastructure.config.UserAuthenticated;
@@ -21,7 +21,7 @@ import java.security.Principal;
 public class WebSocketEventListener {
 
     private final MessageBrokerGateway messageBrokerGateway;
-    private final RedisPresenceGateway redisPresenceGateway;
+    private final CacheGateway cacheGateway;
 
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
@@ -29,7 +29,7 @@ public class WebSocketEventListener {
         if (userId != null) {
             log.info("User Connected: {}", userId);
 
-            redisPresenceGateway.setUserOnline(userId);
+            cacheGateway.setUserOnline(userId);
 
             broadcastStatus(userId, Status.ONLINE);
         }
@@ -41,7 +41,7 @@ public class WebSocketEventListener {
         if (userId != null) {
             log.info("User Disconnected: {}", userId);
 
-            redisPresenceGateway.setUserOffline(userId);
+            cacheGateway.setUserOffline(userId);
 
             broadcastStatus(userId, Status.OFFLINE);
         }

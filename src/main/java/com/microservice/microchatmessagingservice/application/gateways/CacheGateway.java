@@ -5,10 +5,12 @@ import com.microservice.microchatmessagingservice.domain.enums.Status;
 import java.util.List;
 import java.util.Map;
 
-public interface RedisPresenceGateway {
+public interface CacheGateway {
     void setUserOnline(Long userId);
 
     void setUserOffline(Long userId);
 
     Map<Long, Status> getUsersPresence(List<Long> userIds);
+
+    boolean isBlacklisted(String accessToken);
 }
