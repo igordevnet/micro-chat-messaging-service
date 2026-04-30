@@ -1,9 +1,6 @@
 package com.microservice.microchatmessagingservice.infrastructure.config.rabbitmq;
 
-import com.microservice.microchatmessagingservice.controller.dtos.response.MessageDeletedEvent;
-import com.microservice.microchatmessagingservice.controller.dtos.response.MessageResponse;
-import com.microservice.microchatmessagingservice.controller.dtos.response.ReadReceiptEvent;
-import com.microservice.microchatmessagingservice.controller.dtos.response.SignalingPayload;
+import com.microservice.microchatmessagingservice.controller.dtos.response.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
@@ -45,6 +42,13 @@ public class ChatListener {
         String destination = "/queue/signaling." + signalingPayload.targetId();
         messagingTemplate.convertAndSend(destination, signalingPayload);
         log.debug("Call event sent to: {}", destination);
+    }
+
+    @RabbitHandler
+    public void handleUserStatus(UserStatusEvent event) {
+        String destination = "/topic/system";
+        messagingTemplate.convertAndSend(destination, event);
+        log.debug("Status event sent from system.");
     }
 
     @RabbitHandler(isDefault = true)

@@ -9,4 +9,6 @@ public interface FriendshipGateway {
     Friendship saveFriendship(Friendship friendship);
 
     Friendship getFriendshipById(@NotNull UUID uuid);
+
+    Boolean existsByUsers(Long requesterId, Long receiverId);
 }

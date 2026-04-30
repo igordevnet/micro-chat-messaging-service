@@ -1,5 +1,7 @@
 package com.microservice.microchatmessagingservice.application.usecases;
 
+import com.microservice.microchatmessagingservice.application.exceptions.FriendshipAlreadyExistsException;
+import com.microservice.microchatmessagingservice.application.exceptions.UnauthorizedActionException;
 import com.microservice.microchatmessagingservice.application.gateways.FriendshipGateway;
 import com.microservice.microchatmessagingservice.application.gateways.MessageBrokerGateway;
 import com.microservice.microchatmessagingservice.controller.dtos.request.FriendshipAnswerRequest;
@@ -8,7 +10,6 @@ import com.microservice.microchatmessagingservice.controller.dtos.response.Frien
 import com.microservice.microchatmessagingservice.domain.Friendship;
 import com.microservice.microchatmessagingservice.domain.enums.FriendshipStatus;
 import com.microservice.microchatmessagingservice.infrastructure.persistence.mappers.FriendshipMapper;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,9 @@ public class FriendshipUseCase {
     private final MessageBrokerGateway messageBrokerGateway;
 
     public void sendFriendshipRequest(FriendshipRequest friendshipRequest, Long requesterId) {
+
+        throwIfFriendshipAlreadyExist(requesterId, friendshipRequest.receiverId());
+
         Friendship friendship = Friendship.builder()
                 .requesterId(requesterId)
                 .receiverId(friendshipRequest.receiverId())
@@ -38,6 +42,8 @@ public class FriendshipUseCase {
 
     public void answerFriendshipRequest(FriendshipAnswerRequest friendshipRequest, Long senderId) {
         var friendship = getFriendshipById(friendshipRequest.friendshipId());
+
+        throwIfUserIsNotTheReceiver(senderId, friendship);
 
         Friendship savedFriendship = switch (friendshipRequest.status()) {
             case ACCEPTED -> {
@@ -58,6 +64,8 @@ public class FriendshipUseCase {
 
     public void blockFriendship(UUID friendshipId, Long senderId) {
         var friendship = getFriendshipById(friendshipId);
+
+        throwIfUserIsNotTheReceiver(senderId, friendship);
 
         friendship.setStatus(FriendshipStatus.BLOCKED);
 
@@ -80,5 +88,19 @@ public class FriendshipUseCase {
                 "chat.event." + targetUserId,
                 friendshipResponse
         );
+    }
+
+    private void throwIfUserIsNotTheReceiver(Long senderId, Friendship friendship) {
+        if (!friendship.getReceiverId().equals(senderId)) {
+            throw new UnauthorizedActionException("Only the receiver can answer this friend request.");
+        }
+    }
+
+    private void throwIfFriendshipAlreadyExist(Long requesterId, Long receiverId) {
+        var friendship = friendshipGateway.existsByUsers(requesterId, receiverId);
+
+        if (friendship) {
+            throw new FriendshipAlreadyExistsException("You can't send the request twice");
+        }
     }
 }
