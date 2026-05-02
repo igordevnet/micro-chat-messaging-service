@@ -13,6 +13,7 @@ import com.microservice.microchatmessagingservice.infrastructure.persistence.map
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -76,6 +77,10 @@ public class FriendshipUseCase {
         Long targetId = friendship.getRequesterId().equals(senderId) ? friendship.getReceiverId() : friendship.getRequesterId();
 
         sendToBroker(targetId ,response);
+    }
+
+    public List<Long> getAcceptedFriendIds(Long userId) {
+        return friendshipGateway.getAcceptedFriendIds(userId);
     }
 
     private Friendship getFriendshipById(UUID friendshipId) {

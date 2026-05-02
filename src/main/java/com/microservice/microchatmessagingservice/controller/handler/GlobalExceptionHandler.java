@@ -73,6 +73,30 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(FriendshipNotFound.class)
+    public ResponseEntity<StandardError> handleFriendshipNotFoundException(FriendshipNotFound ex, HttpServletRequest request) {
+        var response = StandardError.builder()
+                .error(ex.getMessage())
+                .path(request.getRequestURI())
+                .timestamp(LocalDate.now())
+                .status(HttpStatus.NOT_FOUND.value())
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(FriendshipAlreadyExistsException.class)
+    public ResponseEntity<StandardError> handleFriendshipAlreadyExistsException(FriendshipAlreadyExistsException ex, HttpServletRequest request) {
+        var response = StandardError.builder()
+                .error(ex.getMessage())
+                .path(request.getRequestURI())
+                .timestamp(LocalDate.now())
+                .status(HttpStatus.CONFLICT.value())
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<StandardError> handleValidationErrors(MethodArgumentNotValidException e, HttpServletRequest request) {
         String errorMessage = e.getBindingResult().getFieldErrors()

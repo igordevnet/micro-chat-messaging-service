@@ -1,5 +1,6 @@
 package com.microservice.microchatmessagingservice.infrastructure.config.rabbitmq;
 
+import com.microservice.microchatmessagingservice.application.usecases.FriendshipUseCase;
 import com.microservice.microchatmessagingservice.controller.dtos.response.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +9,8 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -15,6 +18,7 @@ import org.springframework.stereotype.Service;
 public class ChatListener {
 
     private final SimpMessagingTemplate messagingTemplate;
+    private final FriendshipUseCase friendshipUseCase;
 
     @RabbitHandler
     public void handleMessage(MessageResponse message) {
@@ -46,9 +50,22 @@ public class ChatListener {
 
     @RabbitHandler
     public void handleUserStatus(UserStatusEvent event) {
-        String destination = "/topic/system";
-        messagingTemplate.convertAndSend(destination, event);
+
+        List<Long> friendIds = friendshipUseCase.getAcceptedFriendIds(event.userId());
+
+        for (Long friendId : friendIds) {
+            String destination = "/topic/presence." + friendId;
+            messagingTemplate.convertAndSend(destination, event);
+        }
+
         log.debug("Status event sent from system.");
+    }
+
+    @RabbitHandler
+    public void handleFriendship(FriendshipResponse friendshipResponse) {
+        String destination = "/queue/user." + friendshipResponse.receiverId();
+        messagingTemplate.convertAndSend(destination, friendshipResponse);
+        log.debug("Friendship event sent to: {}", destination);
     }
 
     @RabbitHandler(isDefault = true)
