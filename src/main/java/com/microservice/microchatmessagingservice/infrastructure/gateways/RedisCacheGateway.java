@@ -1,6 +1,6 @@
 package com.microservice.microchatmessagingservice.infrastructure.gateways;
 
-import com.microservice.microchatmessagingservice.application.gateways.RedisPresenceGateway;
+import com.microservice.microchatmessagingservice.application.gateways.CacheGateway;
 import com.microservice.microchatmessagingservice.domain.enums.Status;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -13,10 +13,11 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
-public class RedisPresenceRepositoryGateway implements RedisPresenceGateway {
+public class RedisCacheGateway implements CacheGateway {
 
     private final StringRedisTemplate redisTemplate;
     private static final String PRESENCE_PREFIX = "user:presence:";
+    private static final String TOKEN_PREFIX = "user:token:";
 
     @Override
     public void setUserOnline(Long userId) {
@@ -41,5 +42,11 @@ public class RedisPresenceRepositoryGateway implements RedisPresenceGateway {
                     return statusString != null ? Status.valueOf(statusString) : Status.OFFLINE;
                 }
         ));
+    }
+
+    @Override
+    public boolean isBlacklisted(String accessToken) {
+        String result = redisTemplate.opsForValue().get(TOKEN_PREFIX + accessToken);
+        return result != null;
     }
 }

@@ -12,7 +12,7 @@ public class MessageBrokerRabbitGateway implements MessageBrokerGateway {
     private final RabbitTemplate rabbitTemplate;
 
     @Override
-    public void convertAndSend(String topic, String destination, Object message) {
-        rabbitTemplate.convertAndSend(topic, destination, message);
+    public void convertAndSend(String exchange, String routingKey, Object message) {
+        rabbitTemplate.convertAndSend(exchange, routingKey, message);
     }
 }

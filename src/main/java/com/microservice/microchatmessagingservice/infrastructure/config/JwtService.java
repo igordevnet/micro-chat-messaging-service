@@ -1,9 +1,11 @@
 package com.microservice.microchatmessagingservice.infrastructure.config;
 
+import com.microservice.microchatmessagingservice.application.gateways.CacheGateway;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +14,10 @@ import java.util.Date;
 import java.util.function.Function;
 
 @Service
+@RequiredArgsConstructor
 public class JwtService {
+
+    private final CacheGateway cacheGateway;
 
     @Value("${api.security.token.secret}")
     private String secretKey;
@@ -32,7 +37,7 @@ public class JwtService {
 
     public boolean isValid(String token) {
         try {
-            return !isTokenExpired(token);
+            return !isTokenExpired(token) && !cacheGateway.isBlacklisted(token);
         } catch (Exception e) {
             return false;
         }

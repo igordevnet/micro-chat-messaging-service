@@ -1,6 +1,6 @@
 package com.microservice.microchatmessagingservice.controller;
 
-import com.microservice.microchatmessagingservice.application.gateways.RedisPresenceGateway;
+import com.microservice.microchatmessagingservice.application.gateways.CacheGateway;
 import com.microservice.microchatmessagingservice.domain.enums.Status;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,10 +17,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class PresenceController {
 
-    private final RedisPresenceGateway redisPresenceGateway;
+    private final CacheGateway cacheGateway;
 
     @GetMapping
     public ResponseEntity<Map<Long, Status>> checkPresence(@RequestParam List<Long> userIds) {
-        return ResponseEntity.ok(redisPresenceGateway.getUsersPresence(userIds));
+        return ResponseEntity.ok(cacheGateway.getUsersPresence(userIds));
     }
 }

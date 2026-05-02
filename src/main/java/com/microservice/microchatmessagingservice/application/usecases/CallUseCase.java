@@ -28,11 +28,7 @@ public class CallUseCase {
                 .data(request.data())
                 .build();
 
-        messageBrokerGateway.convertAndSend(
-                "chat.topic",
-                "chat.event." + request.targetId(),
-                signalingPayload
-        );
+        sendToBroker(signalingPayload);
 
         handleCallType(request, senderId);
     }
@@ -61,5 +57,13 @@ public class CallUseCase {
                 .build();
 
         messageUseCase.saveMessage(chatId, senderId, logMessage, null);
+    }
+
+    private void sendToBroker(SignalingPayload signalingPayload) {
+        messageBrokerGateway.convertAndSend(
+                "chat.topic",
+                "chat.event." + signalingPayload.targetId(),
+                signalingPayload
+        );
     }
 }

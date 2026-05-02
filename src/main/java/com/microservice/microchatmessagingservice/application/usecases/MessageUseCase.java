@@ -65,7 +65,7 @@ public class MessageUseCase {
 
         var messageResponse = messageMapper.domainToResponse(savedMessage);
 
-        messageBrokerGateway.convertAndSend("chat.topic", "chat.event." + chatId, messageResponse);
+        sendToBroker(chatId, messageResponse);
     }
 
     @CacheEvict(value = "messages", key = "#chatId + '*'", allEntries = true)
@@ -93,7 +93,7 @@ public class MessageUseCase {
 
         var event = new MessageDeletedEvent(messageId, chatId, ActionType.DELETE_MESSAGE);
 
-        messageBrokerGateway.convertAndSend("chat.topic", "chat.event." + chatId, event);
+        sendToBroker(chatId, event);
     }
 
     @CacheEvict(value = "messages", key = "#chatId.toString() + '*'", allEntries = true)
@@ -117,7 +117,7 @@ public class MessageUseCase {
 
         var messageResponse = messageMapper.domainToResponse(editedMessage);
 
-        messageBrokerGateway.convertAndSend("chat.topic", "chat.event." + chatId, messageResponse);
+        sendToBroker(chatId, messageResponse);
     }
 
     @CacheEvict(value = "messages", key = "#chatId.toString() + '*'", allEntries = true)
@@ -149,7 +149,7 @@ public class MessageUseCase {
 
         var response = messageMapper.domainToResponse(message);
 
-        messageBrokerGateway.convertAndSend("chat.topic", "chat.event." + chatId, response);
+        sendToBroker(chatId, response);
     }
 
     public MessagePaginatedResponse getMessages(UUID chatId, int page, int size) {
@@ -188,7 +188,7 @@ public class MessageUseCase {
                     .actionType(ActionType.READ)
                     .build();
 
-            messageBrokerGateway.convertAndSend("chat.topic", "chat.event." + chatId, event);
+            sendToBroker(chatId, event);
         }
     }
 
@@ -231,5 +231,9 @@ public class MessageUseCase {
             return "New audio";
         }
         return message.getContent();
+    }
+
+    private void sendToBroker(UUID chatId ,Object payload) {
+        messageBrokerGateway.convertAndSend("chat.topic", "chat.event." + chatId, payload);
     }
 }

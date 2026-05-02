@@ -24,8 +24,13 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Binding binding(TopicExchange chatExchange, Queue autoDeleteQueue) {
+    public Binding chatBinding(TopicExchange chatExchange, Queue autoDeleteQueue) {
         return BindingBuilder.bind(autoDeleteQueue).to(chatExchange).with("chat.event.#");
+    }
+
+    @Bean
+    public Binding systemBinding(TopicExchange chatExchange, Queue autoDeleteQueue) {
+        return BindingBuilder.bind(autoDeleteQueue).to(chatExchange).with("system.presence.#");
     }
 
     @Bean

@@ -1,15 +1,15 @@
 package com.microservice.microchatmessagingservice.infrastructure.config.rabbitmq;
 
-import com.microservice.microchatmessagingservice.controller.dtos.response.MessageDeletedEvent;
-import com.microservice.microchatmessagingservice.controller.dtos.response.MessageResponse;
-import com.microservice.microchatmessagingservice.controller.dtos.response.ReadReceiptEvent;
-import com.microservice.microchatmessagingservice.controller.dtos.response.SignalingPayload;
+import com.microservice.microchatmessagingservice.application.usecases.FriendshipUseCase;
+import com.microservice.microchatmessagingservice.controller.dtos.response.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 public class ChatListener {
 
     private final SimpMessagingTemplate messagingTemplate;
+    private final FriendshipUseCase friendshipUseCase;
 
     @RabbitHandler
     public void handleMessage(MessageResponse message) {
@@ -45,6 +46,26 @@ public class ChatListener {
         String destination = "/queue/signaling." + signalingPayload.targetId();
         messagingTemplate.convertAndSend(destination, signalingPayload);
         log.debug("Call event sent to: {}", destination);
+    }
+
+    @RabbitHandler
+    public void handleUserStatus(UserStatusEvent event) {
+
+        List<Long> friendIds = friendshipUseCase.getAcceptedFriendIds(event.userId());
+
+        for (Long friendId : friendIds) {
+            String destination = "/topic/presence." + friendId;
+            messagingTemplate.convertAndSend(destination, event);
+        }
+
+        log.debug("Status event sent from system.");
+    }
+
+    @RabbitHandler
+    public void handleFriendship(FriendshipResponse friendshipResponse) {
+        String destination = "/queue/user." + friendshipResponse.receiverId();
+        messagingTemplate.convertAndSend(destination, friendshipResponse);
+        log.debug("Friendship event sent to: {}", destination);
     }
 
     @RabbitHandler(isDefault = true)
