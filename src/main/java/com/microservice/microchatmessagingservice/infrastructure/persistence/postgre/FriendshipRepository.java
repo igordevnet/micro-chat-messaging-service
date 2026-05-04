@@ -13,7 +13,7 @@ import java.util.UUID;
 public interface FriendshipRepository extends JpaRepository<FriendshipEntity, UUID> {
 
     @Query("""
-    SELECT f FROM FriendshipEntity f WHERE f.receiverId = :userId OR f.requesterId = :userId
+    SELECT f FROM FriendshipEntity f WHERE (f.receiverId = :userId OR f.requesterId = :userId)
     AND f.status = 'ACCEPTED'
 """)
     List<FriendshipEntity> findAcceptedFriendIdsByUserId(Long userId);

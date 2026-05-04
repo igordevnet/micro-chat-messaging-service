@@ -1,5 +1,6 @@
 package com.microservice.microchatmessagingservice.application.usecases;
 
+import com.microservice.microchatmessagingservice.application.exceptions.ChatNotFoundException;
 import com.microservice.microchatmessagingservice.application.gateways.ChatGateway;
 import com.microservice.microchatmessagingservice.controller.dtos.response.ChatResponse;
 import com.microservice.microchatmessagingservice.controller.dtos.request.ChatRequest;
@@ -75,5 +76,10 @@ public class ChatUseCase implements Serializable {
         List<Chat> chats = chatGateway.getChatList(userId);
 
         return chatMapper.domainToResponseList(chats);
+    }
+
+    public Chat getChatById(UUID chatId) {
+        return chatGateway.getChat(chatId)
+                .orElseThrow(() -> new ChatNotFoundException("Chat not found"));
     }
 }

@@ -11,9 +11,11 @@ import com.microservice.microchatmessagingservice.controller.dtos.response.Messa
 import com.microservice.microchatmessagingservice.controller.dtos.request.EditMessageRequest;
 import com.microservice.microchatmessagingservice.controller.dtos.request.SendMessageRequest;
 import com.microservice.microchatmessagingservice.domain.Attachment;
+import com.microservice.microchatmessagingservice.domain.ChatParticipant;
 import com.microservice.microchatmessagingservice.domain.Message;
 import com.microservice.microchatmessagingservice.domain.enums.ActionType;
 import com.microservice.microchatmessagingservice.domain.enums.MessageType;
+import com.microservice.microchatmessagingservice.infrastructure.config.UserAuthenticated;
 import com.microservice.microchatmessagingservice.infrastructure.persistence.mappers.MessageMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,18 +45,20 @@ public class MessageUseCase {
     private final MessageMapper messageMapper;
     private final MessageBrokerGateway messageBrokerGateway;
     private final FileStorageGateway fileStorageGateway;
+    private final EventUseCase eventUseCase;
+    private final ChatUseCase chatUseCase;
 
     @CacheEvict(value = "messages", key = "#chatId.toString() + '*'", allEntries = true)
     @Transactional
     public void saveMessage(
             UUID chatId,
-            Long userId,
+            UserAuthenticated user,
             SendMessageRequest messageRequest,
             MultipartFile file
     ) {
         Message message = messageMapper.sendRequestToDomain(messageRequest);
         message.setChatId(chatId);
-        message.setSenderId(userId);
+        message.setSenderId(user.id());
 
         var handledMessage = handleMessageType(message, file);
 
@@ -66,6 +70,10 @@ public class MessageUseCase {
         var messageResponse = messageMapper.domainToResponse(savedMessage);
 
         sendToBroker(chatId, messageResponse);
+
+        if(!message.getMessageType().equals(MessageType.CALL_LOG)) {
+            publishEvent(user.id(), user.username(), chatId);
+        }
     }
 
     @CacheEvict(value = "messages", key = "#chatId + '*'", allEntries = true)
@@ -122,7 +130,12 @@ public class MessageUseCase {
 
     @CacheEvict(value = "messages", key = "#chatId.toString() + '*'", allEntries = true)
     @Transactional
-    public void saveAudioMessage(UUID chatId, Long userId, SendAudioRequest request, MultipartFile file) {
+    public void saveAudioMessage(
+            UUID chatId,
+            UserAuthenticated user,
+            SendAudioRequest request,
+            MultipartFile file
+    ) {
 
         LocalDateTime now = LocalDateTime.now();
         Attachment attachment = fileStorageGateway.store(file, chatId);
@@ -137,7 +150,7 @@ public class MessageUseCase {
 
         Message message = Message.builder()
                 .chatId(chatId)
-                .senderId(userId)
+                .senderId(user.id())
                 .messageType(MessageType.AUDIO)
                 .attachment(audioAttachment)
                 .createdAt(LocalDateTime.now())
@@ -150,6 +163,7 @@ public class MessageUseCase {
         var response = messageMapper.domainToResponse(message);
 
         sendToBroker(chatId, response);
+        publishEvent(user.id(), user.username(), chatId);
     }
 
     public MessagePaginatedResponse getMessages(UUID chatId, int page, int size) {
@@ -235,5 +249,19 @@ public class MessageUseCase {
 
     private void sendToBroker(UUID chatId ,Object payload) {
         messageBrokerGateway.convertAndSend("chat.topic", "chat.event." + chatId, payload);
+    }
+
+    private void publishEvent(Long senderId, String senderName, UUID chatId) {
+        var chat = chatUseCase.getChatById(chatId);
+
+        List<Long> receiverIds = chat.getParticipants()
+                .stream()
+                .map(ChatParticipant::getUserId)
+                .filter(id -> !id.equals(senderId))
+                .toList();
+
+        for (Long receiverId:receiverIds) {
+            eventUseCase.publishEvent(senderId, receiverId, "NEW_MESSAGE", senderName + " sent you a new message!");
+        }
     }
 }

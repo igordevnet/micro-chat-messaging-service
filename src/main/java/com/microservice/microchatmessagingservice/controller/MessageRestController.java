@@ -38,7 +38,7 @@ public class MessageRestController {
             @RequestPart(value = "file", required = false) MultipartFile file,
             @AuthenticationPrincipal UserAuthenticated user
     ) {
-        messageUseCase.saveMessage(chatId, user.id(), request, file);
+        messageUseCase.saveMessage(chatId, user, request, file);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -49,7 +49,7 @@ public class MessageRestController {
             @RequestPart("file") MultipartFile file,
             @AuthenticationPrincipal UserAuthenticated user
     ) {
-        messageUseCase.saveAudioMessage(chatId, user.id(), request, file);
+        messageUseCase.saveAudioMessage(chatId, user, request, file);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 }

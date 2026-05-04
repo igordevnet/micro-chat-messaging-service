@@ -25,6 +25,6 @@ public class CallWebSocketController {
         var auth = (UsernamePasswordAuthenticationToken) principal;
         var currentUser = (UserAuthenticated) auth.getPrincipal();
 
-        callUseCase.handleCall(request, currentUser.id());
+        callUseCase.handleCall(request, currentUser);
     }
 }
