@@ -1,11 +1,23 @@
-FROM maven:3.9.6-eclipse-temurin-21 AS build
+FROM eclipse-temurin:21-jdk-alpine AS builder
+
 WORKDIR /app
-COPY pom.xml .
+
+COPY .mvn/ .mvn
+COPY mvnw pom.xml ./
+
+RUN sed -i 's/\r$//' mvnw
+RUN chmod +x mvnw
+
+RUN ./mvnw dependency:go-offline
+
 COPY src ./src
-RUN mvn clean package -Dmaven.test.skip=true
+
+RUN ./mvnw clean package -DskipTests
 
 FROM eclipse-temurin:21-jre-alpine
+
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
-EXPOSE 8081
+
+COPY --from=builder /app/target/*.jar app.jar
+
 ENTRYPOINT ["java", "-jar", "app.jar"]

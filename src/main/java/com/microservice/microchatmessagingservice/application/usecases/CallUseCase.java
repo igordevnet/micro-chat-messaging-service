@@ -5,6 +5,7 @@ import com.microservice.microchatmessagingservice.controller.dtos.request.SendMe
 import com.microservice.microchatmessagingservice.controller.dtos.request.SignalingRequest;
 import com.microservice.microchatmessagingservice.controller.dtos.response.SignalingPayload;
 import com.microservice.microchatmessagingservice.domain.enums.MessageType;
+import com.microservice.microchatmessagingservice.infrastructure.config.UserAuthenticated;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,45 +19,45 @@ public class CallUseCase {
     private final MessageBrokerGateway messageBrokerGateway;
     private final MessageUseCase messageUseCase;
 
-    public void handleCall(SignalingRequest request, Long senderId ) {
+    public void handleCall(SignalingRequest request, UserAuthenticated user) {
 
         var signalingPayload = SignalingPayload.builder()
                 .type(request.type())
                 .chatId(request.chatId())
-                .senderId(senderId)
+                .senderId(user.id())
                 .targetId(request.targetId())
                 .data(request.data())
                 .build();
 
         sendToBroker(signalingPayload);
 
-        handleCallType(request, senderId);
+        handleCallType(request, user);
     }
 
-    private void handleCallType(SignalingRequest request, Long senderId) {
+    private void handleCallType(SignalingRequest request, UserAuthenticated user) {
         switch (request.type()) {
             case REJECTED:
-                saveCallLogToDatabase(request.chatId(), senderId, "Voice Call Rejected");
+                saveCallLogToDatabase(request.chatId(), user, "Voice Call Rejected");
                 break;
 
             case HANG_UP:
-                saveCallLogToDatabase(request.chatId(), senderId, "Voice Call Ended");
+                saveCallLogToDatabase(request.chatId(), user, "Voice Call Ended");
                 break;
 
             case MISSED:
-                saveCallLogToDatabase(request.chatId(), senderId, "Missed Voice Call");
+                saveCallLogToDatabase(request.chatId(), user, "Missed Voice Call");
                 break;
         }
     }
 
-    private void saveCallLogToDatabase(UUID chatId, Long senderId, String content) {
+    private void saveCallLogToDatabase(UUID chatId, UserAuthenticated user, String content) {
         SendMessageRequest logMessage = SendMessageRequest.builder()
                 .messageType(MessageType.CALL_LOG)
                 .content(content)
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        messageUseCase.saveMessage(chatId, senderId, logMessage, null);
+        messageUseCase.saveMessage(chatId, user, logMessage, null);
     }
 
     private void sendToBroker(SignalingPayload signalingPayload) {
