@@ -12,6 +12,7 @@ import com.microservice.microchatmessagingservice.domain.enums.FriendshipStatus;
 import com.microservice.microchatmessagingservice.infrastructure.persistence.mappers.FriendshipMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +25,7 @@ public class FriendshipUseCase {
     private final FriendshipMapper friendshipMapper;
     private final MessageBrokerGateway messageBrokerGateway;
 
+    @Transactional
     public void sendFriendshipRequest(FriendshipRequest friendshipRequest, Long requesterId) {
 
         throwIfFriendshipAlreadyExist(requesterId, friendshipRequest.receiverId());
@@ -41,6 +43,7 @@ public class FriendshipUseCase {
         sendToBroker(friendship.getReceiverId(), response);
     }
 
+    @Transactional
     public void answerFriendshipRequest(FriendshipAnswerRequest friendshipRequest, Long senderId) {
         var friendship = getFriendshipById(friendshipRequest.friendshipId());
 
@@ -63,10 +66,11 @@ public class FriendshipUseCase {
         sendToBroker(friendship.getRequesterId(), response);
     }
 
+    @Transactional
     public void blockFriendship(UUID friendshipId, Long senderId) {
         var friendship = getFriendshipById(friendshipId);
 
-        throwIfUserIsNotTheReceiver(senderId, friendship);
+        throwIfUserIsNeitherTheReceiverNorTheSender(senderId, friendship);
 
         friendship.setStatus(FriendshipStatus.BLOCKED);
 
@@ -106,6 +110,12 @@ public class FriendshipUseCase {
 
         if (friendship) {
             throw new FriendshipAlreadyExistsException("You can't send the request twice");
+        }
+    }
+
+    private void throwIfUserIsNeitherTheReceiverNorTheSender(Long senderId, Friendship friendship) {
+        if (!friendship.getReceiverId().equals(senderId) && !friendship.getRequesterId().equals(senderId)) {
+            throw new UnauthorizedActionException("Only the friendship's owners can block the friendship.");
         }
     }
 }
