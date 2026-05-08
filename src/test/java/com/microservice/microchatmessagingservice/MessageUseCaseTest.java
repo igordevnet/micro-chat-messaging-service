@@ -9,6 +9,8 @@ import com.microservice.microchatmessagingservice.controller.dtos.request.EditMe
 import com.microservice.microchatmessagingservice.controller.dtos.request.SendMessageRequest;
 import com.microservice.microchatmessagingservice.domain.enums.ActionType;
 import com.microservice.microchatmessagingservice.domain.Message;
+import com.microservice.microchatmessagingservice.domain.enums.MessageType;
+import com.microservice.microchatmessagingservice.infrastructure.config.UserAuthenticated; // <-- Added Import
 import com.microservice.microchatmessagingservice.infrastructure.persistence.mappers.MessageMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -81,21 +83,23 @@ class MessageUseCaseTest {
     @DisplayName("Should save a message and update chat preview")
     void shouldSaveMessage() {
         Long userId = 99L;
+        UserAuthenticated user = new UserAuthenticated(userId, "username", "ROLE_USER");
+
         String contentText = "content";
-        SendMessageRequest request = new SendMessageRequest(contentText, LocalDateTime.now());
+        SendMessageRequest request = new SendMessageRequest(contentText, LocalDateTime.now(), MessageType.TEXT);
 
         Message domainMessage = new Message();
         Message savedMessage = new Message();
         savedMessage.setContent(contentText);
         savedMessage.setCreatedAt(LocalDateTime.now());
 
-        MessageResponse expectedResponse = new MessageResponse("msg-123", userId, contentText, false, false, ActionType.NEW_MESSAGE, LocalDateTime.now());
+        MessageResponse expectedResponse = new MessageResponse("msg-123", chatId, userId, contentText, false, ActionType.NEW_MESSAGE, null, LocalDateTime.now());
 
         when(messageMapper.sendRequestToDomain(request)).thenReturn(domainMessage);
         when(messageGateway.saveMessage(any(Message.class))).thenReturn(savedMessage);
         when(messageMapper.domainToResponse(savedMessage)).thenReturn(expectedResponse);
 
-        messageUseCase.saveMessage(chatId, userId, request);
+        messageUseCase.saveMessage(chatId, user, request, null);
 
         verify(chatGateway).updateLastMessage(eq(chatId), anyString(), any());
         verify(messageGateway).saveMessage(domainMessage);
