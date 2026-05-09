@@ -47,7 +47,8 @@ Configure these variables in your deployment environment to connect to the infra
 | **Database: MongoDB** | | |
 | `MONGO_URI` | Mongo connection string | `mongodb://admin:password@localhost:27017/chat_messages_db?authSource=admin` |
 | **Cache: Redis** | | |
-| `SPRING_DATA_REDIS_HOST` | Redis host | `localhost` |
+| `SPRING_DATA_REDIS_HOST` | Redis host               | `localhost`      |
+| `SPRING_DATA_REDIS_PORT` | Redis port               | `6379`           |
 | **Broker: RabbitMQ** | | |
 | `SPRING_RABBITMQ_HOST` | RabbitMQ host | `localhost` |
 | `SPRING_RABBITMQ_CLIENT_USERNAME` | STOMP client user | `guest` |
