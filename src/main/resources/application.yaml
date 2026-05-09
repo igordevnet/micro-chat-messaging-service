@@ -22,11 +22,11 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
   data:
     mongodb:
-      uri: mongodb://admin:password@localhost:27017/chat_messages_db?authSource=admin
+      uri: ${MONGO_URI:mongodb://admin:password@localhost:27017/chat_messages_db?authSource=admin}
 
     redis:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
-      port: 6379
+      port: ${SPRING_DATA_REDIS_PORT:6379}
 
   rabbitmq:
     host: ${SPRING_RABBITMQ_HOST:localhost}

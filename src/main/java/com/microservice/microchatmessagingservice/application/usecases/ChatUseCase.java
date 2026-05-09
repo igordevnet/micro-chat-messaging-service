@@ -63,7 +63,10 @@ public class ChatUseCase implements Serializable {
 
         Chat chat = chatOptional.get();
 
-        if (!chat.getParticipants().contains(userId)) {
+        boolean isParticipant = chat.getParticipants().stream()
+                .anyMatch(participant -> participant.getUserId().equals(userId));
+
+        if (!isParticipant) {
             log.warn("SECURITY ALERT: User {} attempted to delete chat {} without permissions.", userId, chatId);
             return;
         }
