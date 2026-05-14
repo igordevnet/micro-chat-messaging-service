@@ -8,6 +8,7 @@ public record FriendshipResponse(
         UUID id,
         Long requesterId,
         Long receiverId,
-        FriendshipStatus status
+        FriendshipStatus status,
+        Long blockedBy
 ) {
 }

@@ -3,6 +3,7 @@ package com.microservice.microchatmessagingservice.controller;
 import com.microservice.microchatmessagingservice.application.usecases.FriendshipUseCase;
 import com.microservice.microchatmessagingservice.controller.dtos.request.FriendshipAnswerRequest;
 import com.microservice.microchatmessagingservice.controller.dtos.request.FriendshipRequest;
+import com.microservice.microchatmessagingservice.controller.dtos.response.FriendshipResponse;
 import com.microservice.microchatmessagingservice.infrastructure.config.UserAuthenticated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -90,5 +91,31 @@ public class FriendshipController {
     ) {
         List<Long> friends = friendshipUseCase.getAcceptedFriendIds(user.id());
         return ResponseEntity.ok(friends);
+    }
+
+    @Operation(summary = "Get pending friendship requests", description = "Retrieves a list of all pending friendship requests involving the authenticated user.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Pending requests retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = FriendshipResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT required", content = @Content)
+    })
+    @GetMapping("/pending")
+    public ResponseEntity<List<FriendshipResponse>> getPendingFriends(
+            @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated user
+    ) {
+        return ResponseEntity.ok(friendshipUseCase.getPendingFriend(user.id()));
+    }
+
+    @Operation(summary = "Get blocked friendships", description = "Retrieves a list of all friendships currently blocked by or affecting the authenticated user.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Blocked friendships retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = FriendshipResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT required", content = @Content)
+    })
+    @GetMapping("/blocked")
+    public ResponseEntity<List<FriendshipResponse>> getBlockedFriends(
+            @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated user
+    ) {
+        return ResponseEntity.ok(friendshipUseCase.getBlockedFriend(user.id()));
     }
 }

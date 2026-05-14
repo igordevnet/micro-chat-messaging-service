@@ -73,6 +73,7 @@ public class FriendshipUseCase {
         throwIfUserIsNeitherTheReceiverNorTheSender(senderId, friendship);
 
         friendship.setStatus(FriendshipStatus.BLOCKED);
+        friendship.setBlockedBy(senderId);
 
         var savedFriendship = friendshipGateway.saveFriendship(friendship);
 
@@ -85,6 +86,21 @@ public class FriendshipUseCase {
 
     public List<Long> getAcceptedFriendIds(Long userId) {
         return friendshipGateway.getAcceptedFriendIds(userId);
+    }
+
+
+    public List<FriendshipResponse> getPendingFriend(Long userId) {
+        return friendshipGateway.getPendingFriend(userId)
+                .stream()
+                .map(friendshipMapper::domainToResponse)
+                .toList();
+    }
+
+    public List<FriendshipResponse> getBlockedFriend(Long userId) {
+        return friendshipGateway.getBlockedFriend(userId)
+                .stream()
+                .map(friendshipMapper::domainToResponse)
+                .toList();
     }
 
     private Friendship getFriendshipById(UUID friendshipId) {

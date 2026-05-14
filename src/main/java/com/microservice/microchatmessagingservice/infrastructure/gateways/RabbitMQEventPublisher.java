@@ -23,6 +23,7 @@ public class RabbitMQEventPublisher implements EventPublisherGateway {
                 eventPayload.receiverId(),
                 eventPayload.type(),
                 eventPayload.content(),
+                eventPayload.chatId(),
                 LocalDateTime.now()
         );
 

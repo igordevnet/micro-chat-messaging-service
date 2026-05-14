@@ -21,4 +21,6 @@ public class Friendship {
     private Long receiverId;
 
     private FriendshipStatus status;
+
+    private Long blockedBy;
 }

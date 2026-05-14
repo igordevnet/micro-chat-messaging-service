@@ -261,7 +261,7 @@ public class MessageUseCase {
                 .toList();
 
         for (Long receiverId:receiverIds) {
-            eventUseCase.publishEvent(senderId, receiverId, "NEW_MESSAGE", senderName + " sent you a new message!");
+            eventUseCase.publishEvent(senderId, receiverId, chat.getId() ,"NEW_MESSAGE", senderName + " sent you a new message!");
         }
     }
 }
