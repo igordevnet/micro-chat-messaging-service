@@ -11,5 +11,6 @@ public record SignalingPayload(
         Long senderId,
         Long targetId,
         UUID chatId,
-        String data
+        String data,
+        boolean isVideo
 ) {}
