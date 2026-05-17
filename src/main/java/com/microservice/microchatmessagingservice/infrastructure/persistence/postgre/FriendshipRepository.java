@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -37,4 +38,11 @@ public interface FriendshipRepository extends JpaRepository<FriendshipEntity, UU
     AND f.status = 'BLOCKED'
 """)
     List<FriendshipEntity> findBlockedFriendIdsByUserId(Long userId);
+
+    @Query("""
+    SELECT f FROM FriendshipEntity f
+    WHERE (f.requesterId = :userId AND f.receiverId = :senderId)
+       OR (f.requesterId = :senderId AND f.receiverId = :userId)
+    """)
+    Optional<FriendshipEntity> findByUsersId(Long userId, Long senderId);
 }

@@ -18,4 +18,6 @@ public interface FriendshipGateway {
     List<Friendship> getPendingFriend(Long userId);
 
     List<Friendship> getBlockedFriend(Long userId);
+
+    Friendship getFriendshipByUsersId(Long userId, Long senderId);
 }

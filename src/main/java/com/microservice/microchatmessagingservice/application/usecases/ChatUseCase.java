@@ -26,7 +26,7 @@ public class ChatUseCase implements Serializable {
     private final ChatGateway chatGateway;
     private final ChatMapper chatMapper;
 
-    @CacheEvict(value = "userChats", key = "#userId")
+    @CacheEvict(value = "userChats", allEntries = true)
     public ChatResponse createChat(ChatRequest chatRequest, Long userId) {
         Chat chat = chatMapper.requestToDomain(chatRequest);
         chatRequest.participantIds().add(userId);
@@ -50,7 +50,7 @@ public class ChatUseCase implements Serializable {
         return chatMapper.domainToResponse(savedChat);
     }
 
-    @CacheEvict(value = "userChats", key = "#userId")
+    @CacheEvict(value = "userChats", allEntries = true)
     public void deleteChat(
             Long userId,
             UUID chatId

@@ -42,7 +42,7 @@ public class FriendshipController {
             @RequestBody FriendshipRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated user
     ) {
-        friendshipUseCase.sendFriendshipRequest(request, user.id());
+        friendshipUseCase.sendFriendshipRequest(request, user);
         return ResponseEntity.ok().build();
     }
 
@@ -59,7 +59,7 @@ public class FriendshipController {
             @RequestBody FriendshipAnswerRequest request,
             @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated user
     ) {
-        friendshipUseCase.answerFriendshipRequest(request, user.id());
+        friendshipUseCase.answerFriendshipRequest(request, user);
         return ResponseEntity.ok().build();
     }
 
@@ -70,12 +70,28 @@ public class FriendshipController {
             @ApiResponse(responseCode = "403", description = "Forbidden - User is not part of this friendship", content = @Content),
             @ApiResponse(responseCode = "404", description = "Friendship not found", content = @Content)
     })
-    @PutMapping("/{friendshipId}/block")
+    @PutMapping("/{targetUserId}/block")
     public ResponseEntity<Void> blockFriendship(
-            @Parameter(description = "UUID of the friendship to block", required = true) @PathVariable UUID friendshipId,
+            @Parameter(description = "Id of the target user to block", required = true) @PathVariable Long targetUserId,
             @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated user
     ) {
-        friendshipUseCase.blockFriendship(friendshipId, user.id());
+        friendshipUseCase.blockFriendship(targetUserId, user.id());
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Unblock a friendship", description = "Unblocks an existing friendship or pending request. Can be performed by either the sender or receiver.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Friendship unblocked successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT required", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden - User is not part of this friendship", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Friendship not found", content = @Content)
+    })
+    @PutMapping("/{targetUserId}/unblock")
+    public ResponseEntity<Void> unblockFriendship(
+            @Parameter(description = "Id of the target user to unblock", required = true) @PathVariable Long targetUserId,
+            @Parameter(hidden = true) @AuthenticationPrincipal UserAuthenticated user
+    ) {
+        friendshipUseCase.unblockFriendship(targetUserId, user.id());
         return ResponseEntity.ok().build();
     }
 
