@@ -70,6 +70,12 @@ public class MessageUseCase {
 
         determinePreviewAndUpdateLastMessage(message, chatId);
 
+        if (savedMessage.getMessageType() == MessageType.FILE) {
+            String freshUrl = fileStorageGateway.generatePresignedUrl(savedMessage.getAttachment().getKey());
+
+            savedMessage.getAttachment().setUrl(freshUrl);
+        }
+
         var messageResponse = messageMapper.domainToResponse(savedMessage);
 
         sendToBroker(chatId, messageResponse);
@@ -160,11 +166,15 @@ public class MessageUseCase {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        messageGateway.saveMessage(message);
+        var savedMessage = messageGateway.saveMessage(message);
 
-        determinePreviewAndUpdateLastMessage(message, chatId);
+        determinePreviewAndUpdateLastMessage(savedMessage, chatId);
 
-        var response = messageMapper.domainToResponse(message);
+        String freshUrl = fileStorageGateway.generatePresignedUrl(savedMessage.getAttachment().getKey());
+
+        savedMessage.getAttachment().setUrl(freshUrl);
+
+        var response = messageMapper.domainToResponse(savedMessage);
 
         sendToBroker(chatId, response);
         publishEvent(user.id(), user.username(), chatId);
