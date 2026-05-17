@@ -8,5 +8,6 @@ public record SignalingRequest(
         SignalingType type,
         Long targetId,
         UUID chatId,
-        String data
+        String data,
+        boolean isVideo
 ) {}

@@ -14,4 +14,10 @@ public interface FriendshipGateway {
     List<Long> getAcceptedFriendIds(Long userId);
 
     Boolean existsByUsers(Long requesterId, Long receiverId);
+
+    List<Friendship> getPendingFriend(Long userId);
+
+    List<Friendship> getBlockedFriend(Long userId);
+
+    Friendship getFriendshipByUsersId(Long userId, Long senderId);
 }

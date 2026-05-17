@@ -1,5 +1,6 @@
 package com.microservice.microchatmessagingservice.application.usecases;
 
+import com.microservice.microchatmessagingservice.application.exceptions.FriendshipBlockedException;
 import com.microservice.microchatmessagingservice.application.exceptions.MessageNotFoundException;
 import com.microservice.microchatmessagingservice.application.exceptions.UnauthorizedActionException;
 import com.microservice.microchatmessagingservice.application.gateways.*;
@@ -10,10 +11,9 @@ import com.microservice.microchatmessagingservice.controller.dtos.response.Messa
 import com.microservice.microchatmessagingservice.controller.dtos.response.MessageResponse;
 import com.microservice.microchatmessagingservice.controller.dtos.request.EditMessageRequest;
 import com.microservice.microchatmessagingservice.controller.dtos.request.SendMessageRequest;
-import com.microservice.microchatmessagingservice.domain.Attachment;
-import com.microservice.microchatmessagingservice.domain.ChatParticipant;
-import com.microservice.microchatmessagingservice.domain.Message;
+import com.microservice.microchatmessagingservice.domain.*;
 import com.microservice.microchatmessagingservice.domain.enums.ActionType;
+import com.microservice.microchatmessagingservice.domain.enums.ChatType;
 import com.microservice.microchatmessagingservice.domain.enums.MessageType;
 import com.microservice.microchatmessagingservice.infrastructure.config.UserAuthenticated;
 import com.microservice.microchatmessagingservice.infrastructure.persistence.mappers.MessageMapper;
@@ -47,6 +47,7 @@ public class MessageUseCase {
     private final FileStorageGateway fileStorageGateway;
     private final EventUseCase eventUseCase;
     private final ChatUseCase chatUseCase;
+    private final FriendshipUseCase friendshipUseCase;
 
     @CacheEvict(value = "messages", key = "#chatId.toString() + '*'", allEntries = true)
     @Transactional
@@ -56,6 +57,8 @@ public class MessageUseCase {
             SendMessageRequest messageRequest,
             MultipartFile file
     ) {
+        throwIfChatIsPrivateAndFriendshipIsBlocked(chatId);
+
         Message message = messageMapper.sendRequestToDomain(messageRequest);
         message.setChatId(chatId);
         message.setSenderId(user.id());
@@ -136,6 +139,7 @@ public class MessageUseCase {
             SendAudioRequest request,
             MultipartFile file
     ) {
+        throwIfChatIsPrivateAndFriendshipIsBlocked(chatId);
 
         LocalDateTime now = LocalDateTime.now();
         Attachment attachment = fileStorageGateway.store(file, chatId);
@@ -261,7 +265,22 @@ public class MessageUseCase {
                 .toList();
 
         for (Long receiverId:receiverIds) {
-            eventUseCase.publishEvent(senderId, receiverId, "NEW_MESSAGE", senderName + " sent you a new message!");
+            eventUseCase.publishEvent(senderId, receiverId, chatId ,"NEW_MESSAGE", senderName + " sent you a new message!");
+        }
+    }
+
+    private void throwIfChatIsPrivateAndFriendshipIsBlocked(UUID chatId) {
+        var chat =  chatUseCase.getChatById(chatId);
+
+        if (chat.getType() == ChatType.ONE_ON_ONE) {
+
+            var participants = chat.getParticipants();
+            Long firstId = participants.get(0).getUserId();
+            Long secondId = participants.get(1).getUserId();
+
+            if (friendshipUseCase.isFriendshipBlocked(firstId, secondId)) {
+                throw new FriendshipBlockedException("You cannot send a message to a blocked friend.");
+            }
         }
     }
 }

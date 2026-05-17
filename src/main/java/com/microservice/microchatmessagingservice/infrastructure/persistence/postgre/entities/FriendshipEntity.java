@@ -31,4 +31,7 @@ public class FriendshipEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private FriendshipStatus status;
+
+    @Column(name = "blocked_by")
+    private Long blockedBy;
 }

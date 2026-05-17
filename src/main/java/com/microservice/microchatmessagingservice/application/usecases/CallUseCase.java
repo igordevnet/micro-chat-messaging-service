@@ -27,6 +27,7 @@ public class CallUseCase {
                 .senderId(user.id())
                 .targetId(request.targetId())
                 .data(request.data())
+                .isVideo(request.isVideo())
                 .build();
 
         sendToBroker(signalingPayload);

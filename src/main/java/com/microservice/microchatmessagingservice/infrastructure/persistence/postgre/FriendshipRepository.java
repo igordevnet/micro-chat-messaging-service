@@ -6,7 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -24,4 +26,23 @@ public interface FriendshipRepository extends JpaRepository<FriendshipEntity, UU
        OR (f.requesterId = :userB AND f.receiverId = :userA)
 """)
     boolean existsBetweenUsers(@Param("userA") Long userA, @Param("userB") Long userB);
+
+    @Query("""
+    SELECT f FROM FriendshipEntity f WHERE (f.receiverId = :userId OR f.requesterId = :userId)
+    AND f.status = 'PENDING'
+""")
+    List<FriendshipEntity> findPendingFriendIdsByUserId(Long userId);
+
+    @Query("""
+    SELECT f FROM FriendshipEntity f WHERE (f.receiverId = :userId OR f.requesterId = :userId)
+    AND f.status = 'BLOCKED'
+""")
+    List<FriendshipEntity> findBlockedFriendIdsByUserId(Long userId);
+
+    @Query("""
+    SELECT f FROM FriendshipEntity f
+    WHERE (f.requesterId = :userId AND f.receiverId = :senderId)
+       OR (f.requesterId = :senderId AND f.receiverId = :userId)
+    """)
+    Optional<FriendshipEntity> findByUsersId(Long userId, Long senderId);
 }

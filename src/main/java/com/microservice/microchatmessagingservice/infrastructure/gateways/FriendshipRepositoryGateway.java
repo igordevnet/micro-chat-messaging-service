@@ -47,4 +47,27 @@ public class FriendshipRepositoryGateway implements FriendshipGateway {
     public Boolean existsByUsers(Long requesterId, Long receiverId) {
         return friendshipRepository.existsBetweenUsers(requesterId, receiverId);
     }
+
+    @Override
+    public List<Friendship> getPendingFriend(Long userId) {
+        return friendshipRepository.findPendingFriendIdsByUserId(userId)
+                .stream()
+                .map(friendshipMapper::entityToDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Friendship> getBlockedFriend(Long userId) {
+        return friendshipRepository.findBlockedFriendIdsByUserId(userId)
+                .stream()
+                .map(friendshipMapper::entityToDomain)
+                .toList();
+    }
+
+    @Override
+    public Friendship getFriendshipByUsersId(Long userId, Long senderId) {
+        return friendshipRepository.findByUsersId(userId, senderId)
+                .map(friendshipMapper::entityToDomain)
+                .orElseThrow(() -> (new FriendshipNotFound("Friendship does not exist")));
+    }
 }
